@@ -1,3 +1,3 @@
-# fun_with_graphs
+# Fun with Graphs
 
 Graph algorithms, projects and utils to come.
