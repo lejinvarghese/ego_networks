@@ -1,4 +1,6 @@
-networkx==2.6.2
-tensorflow==1.15.0
 numpy
 pandas
+jupyter
+matplotlib
+networkx==2.6.2
+tensorflow==1.15.0
