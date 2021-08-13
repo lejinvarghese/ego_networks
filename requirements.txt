@@ -2,5 +2,6 @@ numpy
 pandas
 jupyter
 matplotlib
+plotly
 networkx==2.6.2
 tensorflow==1.15.0

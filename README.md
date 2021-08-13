@@ -9,3 +9,9 @@ Graph algorithms, projects and utils to come.
 ```bash
 sh activate.sh
 ```
+
+## References
+
+1. Stanford CS224W:
+   [Home](http://web.stanford.edu/class/cs224w/)
+   [Class - YouTube](https://www.youtube.com/watch?v=JAB_plj2rbA)
