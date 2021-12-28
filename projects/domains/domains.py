@@ -5,7 +5,7 @@ PATH = os.path.abspath(".")
 os.environ["KMP_WARNINGS"] = "FALSE"
 sys.path.insert(1, PATH)
 
-from utils import timer, create_graph_viz
+from utils import timer, draw_graph_interactive
 from warnings import filterwarnings
 import numpy as np
 import pandas as pd
@@ -140,6 +140,6 @@ if __name__ == "__main__":
 
     color_map = community_louvain.best_partition(G, resolution=0.5)
 
-    fig = create_graph_viz(G, color_map=color_map, size_map=size_map, title=" ")
+    fig = draw_graph_interactive(G, color_map=color_map, size_map=size_map, title=" ")
     fig.write_html("domains/output.html")
     fig.write_image("domains/output.png", scale=3.0)

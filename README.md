@@ -6,9 +6,7 @@ Graph algorithms, projects and utils to come.
 
 ## Get Started
 
-```bash
-sh activate.sh
-```
+
 
 ## References
 
