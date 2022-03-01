@@ -2,7 +2,7 @@ import twint
 
 if __name__ == "__main__":
     c = twint.Config()
-    username = "elonmuskbooks"
+    username = "mutant_liberal"
     c.Username = username
     c.Limit = 20
     c.Pandas = True
@@ -11,3 +11,4 @@ if __name__ == "__main__":
 
     df = twint.storage.panda.Follow_df
     print(df.head())
+
