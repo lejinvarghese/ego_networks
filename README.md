@@ -1,4 +1,4 @@
-# Graph Theory and Network Science
+# Network Science
 
 Graph algorithms, projects and utils to come.
 
