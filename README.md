@@ -6,8 +6,6 @@ Graph algorithms, projects and utils to come.
 
 ## Get Started
 
-
-
 ## References
 
 1. Stanford CS224W:
