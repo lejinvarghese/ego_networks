@@ -3,3 +3,5 @@ pandas
 python-dotenv
 tweepy[async]
 black
+jupyterlab
+networkx
