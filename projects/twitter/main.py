@@ -23,13 +23,23 @@ client = tweepy.Client(TWITTER_API_BEARER_TOKEN, wait_on_rate_limit=True)
 
 def get_user_following(user):
     following_users = []
-    for i in tweepy.Paginator(
-        client.get_users_following, id=user, max_results=1000
-    ).flatten(limit=5000):
+    for i in tweepy.Paginator(client.get_users_following, id=user, max_results=1000).flatten(
+        limit=5000
+    ):
         time.sleep(0.5)
         following_users.append(i.id)  # username
     print(f"User: {user}, Following: {len(following_users)}")
     return {"user": user, "following": following_users}
+
+
+def get_user_description(users):
+    data = client.get_users(ids=users, user_fields=["profile_image_url", "username"]).data
+    return [x.name + ":" + x.username for x in data]
+
+
+def get_user_ids(usernames):
+    data = client.get_users(usernames=usernames, user_fields=["id"]).data
+    return [x.id for x in data]
 
 
 def main():
