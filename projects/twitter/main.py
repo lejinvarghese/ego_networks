@@ -8,11 +8,14 @@ import time
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 import pandas as pd
+import dask.dataframe as dd
 import tweepy
+from datetime import datetime
 
 load_dotenv()
 
-n_threads = cpu_count() - 2
+n_threads = cpu_count() - 1
+time_run = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY")
 TWITTER_API_SECRET = os.getenv("TWITTER_API_SECRET")
@@ -26,7 +29,7 @@ def get_user_following(user):
     for i in tweepy.Paginator(client.get_users_following, id=user, max_results=1000).flatten(
         limit=5000
     ):
-        time.sleep(0.5)
+        time.sleep(0.1)
         following_users.append(i.id)  # username
     print(f"User: {user}, Following: {len(following_users)}")
     return {"user": user, "following": following_users}
@@ -48,13 +51,23 @@ def main():
         user_fields=["id"],
     ).data.id
 
+    existing_users = list(dd.read_csv("data/users_following*.csv").compute().user.unique())
+
+    print(f"Previously following: {len(existing_users)}")
+
     following_users = get_user_following(user).get("following")
 
+    print(f"Currently following: {len(following_users)}")
+
+    r_following_users = list(set(following_users) - set(existing_users))
+
+    print(f"New following: {len(r_following_users)}")
+
     with ThreadPool(n_threads) as t_pool:
-        data = t_pool.map_async(get_user_following, following_users).get()
+        data = t_pool.map_async(get_user_following, r_following_users).get()
 
     data = pd.json_normalize(data)
-    data.to_csv("data/users_followers.csv", index=False)
+    data.to_csv(f"data/users_following_{time_run}.csv", index=False)
 
 
 if __name__ == "__main__":

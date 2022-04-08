@@ -6,4 +6,6 @@ black
 jupyterlab
 networkx
 pyvis
+dask[dataframe]
 matplotlib
+python-louvain
