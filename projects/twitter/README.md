@@ -1,8 +1,10 @@
-# Twitter Network Science
+# Twitter Ego Network
 
 ## Goal
 
-Graph of my Twitter follows and their followers, so I can find appropriate connections.
+Graph of my Twitter ego network to find appropriate recommendations.
+
+![x](./assets/ego_graph.png)
 
 ## Activate Environment
 
