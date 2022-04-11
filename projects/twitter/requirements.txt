@@ -9,3 +9,5 @@ pyvis
 dask[dataframe]
 matplotlib
 python-louvain
+seaborn
+gcsfs

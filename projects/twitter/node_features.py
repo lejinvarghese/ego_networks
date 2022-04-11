@@ -24,6 +24,7 @@ TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY")
 TWITTER_API_SECRET = os.getenv("TWITTER_API_SECRET")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
+CLOUD_STORAGE_BUCKET = "gs://graph_data_science/twitter"
 
 client = tweepy.Client(TWITTER_API_BEARER_TOKEN, wait_on_rate_limit=True)
 
@@ -42,7 +43,7 @@ def main():
         user_fields=["id"],
     ).data.id
 
-    df = dd.read_csv("data/users_following*.csv").compute()
+    df = dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv").compute()
     df.following = df.following.apply(ast.literal_eval)
     df = df.explode("following")
 
@@ -80,7 +81,7 @@ def main():
 
     print(data.head())
 
-    data.to_csv(f"data/node_features_{run_time}.csv", index=False)
+    data.to_csv(f"{CLOUD_STORAGE_BUCKET}/data/node_features_{run_time}.csv", index=False)
 
 
 if __name__ == "__main__":

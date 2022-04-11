@@ -1,4 +1,4 @@
-# Network Science
+# Graph Data Science
 
 Graph algorithms, projects and utils to come.
 
