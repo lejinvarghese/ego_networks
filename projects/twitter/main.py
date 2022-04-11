@@ -20,11 +20,12 @@ TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY")
 TWITTER_API_SECRET = os.getenv("TWITTER_API_SECRET")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
+CLOUD_STORAGE_BUCKET = "gs://graph_data_science/twitter"
 
 client = tweepy.Client(TWITTER_API_BEARER_TOKEN, wait_on_rate_limit=True)
 
 
-def get_user_following(user):   
+def get_user_following(user):
     following_users = []
     for i in tweepy.Paginator(client.get_users_following, id=user, max_results=1000).flatten(
         limit=5000
@@ -51,7 +52,9 @@ def main():
         user_fields=["id"],
     ).data.id
 
-    existing_users = list(dd.read_csv("data/users_following*.csv").compute().user.unique())
+    existing_users = list(
+        dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv").compute().user.unique()
+    )
 
     print(f"Previously following: {len(existing_users)}")
 
@@ -67,7 +70,7 @@ def main():
         data = t_pool.map_async(get_user_following, r_following_users).get()
 
     data = pd.json_normalize(data)
-    data.to_csv(f"data/users_following_{run_time}.csv", index=False)
+    data.to_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following_{run_time}.csv", index=False)
 
 
 if __name__ == "__main__":
