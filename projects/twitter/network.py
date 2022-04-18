@@ -4,7 +4,7 @@ from distutils import core
 
 class EgoNetwork(ABC):
     @abstractproperty
-    def core_user(self):
+    def focal_node(self):
         pass
 
     @abstractmethod
@@ -25,12 +25,12 @@ class EgoNetwork(ABC):
 
 
 class TwitterEgoNetwork(EgoNetwork):
-    def __init__(self, core_user: str):
-        self._core_user = core_user
+    def __init__(self, focal_node: str):
+        self._focal_node = focal_node
 
     @property
-    def core_user(self):
-        return self._core_user
+    def focal_node(self):
+        return self._focal_node
 
     def authenticate(self):
         pass
@@ -46,5 +46,5 @@ class TwitterEgoNetwork(EgoNetwork):
 
 
 if __name__ == "__main__":
-    t = TwitterEgoNetwork(core_user=123)
-    print(t.core_user)
+    t = TwitterEgoNetwork(focal_node=123)
+    print(t.focal_node)
