@@ -114,7 +114,7 @@ if __name__ == "__main__":
         "computational social science",
         "politics",
         "robotics",
-        "game theory"
+        "game theory",
     ]
     models = [
         "https://tfhub.dev/google/universal-sentence-encoder-large/5",

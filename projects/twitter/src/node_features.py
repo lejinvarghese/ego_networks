@@ -81,7 +81,9 @@ def main():
 
     print(data.head())
 
-    data.to_csv(f"{CLOUD_STORAGE_BUCKET}/data/node_features_{run_time}.csv", index=False)
+    data.to_csv(
+        f"{CLOUD_STORAGE_BUCKET}/data/node_features_{run_time}.csv", index=False
+    )
 
 
 if __name__ == "__main__":
