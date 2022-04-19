@@ -67,17 +67,11 @@ class TwitterEgoNetwork(EgoNetwork):
     def client(self, value):
         self._client = value
 
-    def __copy__(self):
-        return TwitterEgoNetwork(self._focal_node, self._radius, self._client)
-
-    def authenticate(self, api_bearer_token):
-        client = tweepy.Client(api_bearer_token, wait_on_rate_limit=True)
-        self._client = client
-        return TwitterEgoNetwork.__copy__(self)
-
     def retrieve_edges(self):
         existing_users = list(
-            dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv").compute().user.unique()
+            dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv")
+            .compute()
+            .user.unique()
         )
         print(f"Previously following: {len(existing_users)}")
 
@@ -86,14 +80,22 @@ class TwitterEgoNetwork(EgoNetwork):
         # return _focal_node_user_id
         pass
 
+    def create_network(self):
+        pass
+
+    def __copy__(self):
+        return TwitterEgoNetwork(self._focal_node, self._radius, self._client)
+
+    def authenticate(self, api_bearer_token):
+        client = tweepy.Client(api_bearer_token, wait_on_rate_limit=True)
+        self._client = client
+        return TwitterEgoNetwork.__copy__(self)
+
     def _retrieve_node_user_id(self):
         return self.client.get_user(
             username=self._focal_node,
             user_fields=["id"],
         ).data.id
-
-    def create_network(self):
-        pass
 
 
 def main():
