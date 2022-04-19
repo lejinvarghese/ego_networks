@@ -77,18 +77,16 @@ class TwitterEgoNetwork(EgoNetwork):
 
     def retrieve_edges(self):
         existing_users = list(
-            dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv")
-            .compute()
-            .user.unique()
+            dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv").compute().user.unique()
         )
         print(f"Previously following: {len(existing_users)}")
 
     def retrieve_node_features(self, node):
-        # _focal_node_user_id = self._retrive_user_id()
+        # _focal_node_user_id = self._retrieve_node_user_id()
         # return _focal_node_user_id
         pass
 
-    def _retrive_user_id(self):
+    def _retrieve_node_user_id(self):
         return self.client.get_user(
             username=self._focal_node,
             user_fields=["id"],
@@ -102,7 +100,6 @@ def main():
     tn = TwitterEgoNetwork(focal_node=TWITTER_USERNAME, radius=2)
     tn_a = tn.authenticate(api_bearer_token=TWITTER_API_BEARER_TOKEN)
     print(f"Retrieving the Ego Network for {tn_a.focal_node}, of Radius: {tn_a.radius}")
-
     tn_a.retrieve_edges()
 
 

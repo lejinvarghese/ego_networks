@@ -40,5 +40,5 @@ def test_twitter_authentication(twitter_network, user_id, expected):
 
 def test_user_id(twitter_network):
     tn = twitter_network.authenticate(TWITTER_API_BEARER_TOKEN)
-    actual = tn._retrive_user_id()
+    actual = tn._retrieve_node_user_id()
     assert actual == TEST_TWITTER_IDS[0]
