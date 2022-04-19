@@ -37,7 +37,7 @@ class EgoNetwork(ABC):
         pass
 
     @abstractmethod
-    def retrieve_node_features(self, node):
+    def retrieve_nodes(self, node):
         pass
 
     @abstractmethod
@@ -81,7 +81,7 @@ class TwitterEgoNetwork(EgoNetwork):
         )
         print(f"Previously following: {len(existing_users)}")
 
-    def retrieve_node_features(self, node):
+    def retrieve_nodes(self, node):
         # _focal_node_user_id = self._retrieve_node_user_id()
         # return _focal_node_user_id
         pass
