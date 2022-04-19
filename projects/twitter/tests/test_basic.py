@@ -1,4 +1,3 @@
-from pkg_resources import EggProvider
 import pytest
 from src.network import TwitterEgoNetwork
 

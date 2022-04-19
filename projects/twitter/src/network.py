@@ -1,6 +1,4 @@
 from abc import ABC, abstractmethod, abstractproperty
-from distutils import core
-
 
 class EgoNetwork(ABC):
     @abstractproperty
