@@ -79,21 +79,25 @@ class TwitterEgoNetwork(EgoNetwork):
             f"Retrieving the ego network for {self._focal_node_id}, @max radius: {self._max_radius}"
         )
 
-        current_edges = dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv").compute()
+        current_edges = dd.read_csv(
+            f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv"
+        ).compute()
         current_edges.following = current_edges.following.apply(ast.literal_eval)
         current_edges = current_edges.explode("following")
 
         previous_neighbors_r1 = list(current_edges.user.unique())
         previous_neighbors_r2 = list(current_edges.following.unique())
 
-        previous_neighbors_r2 = list(set(previous_neighbors_r2) - set(previous_neighbors_r1))
+        previous_neighbors_r2 = list(
+            set(previous_neighbors_r2) - set(previous_neighbors_r1)
+        )
         print(
             f"Previous neighbors \n@radius 1: {len(previous_neighbors_r1)} \n@radius 2: {len(previous_neighbors_r2)} \nPrevious connections: {current_edges.shape[0]}"
         )
 
-        current_neighbors_r1 = self._retrieve_node_out_neighbors(user_id=self._focal_node_id).get(
-            "following"
-        )
+        current_neighbors_r1 = self._retrieve_node_out_neighbors(
+            user_id=self._focal_node_id
+        ).get("following")
 
         print(f"Current neighbors \n@radius 1: {len(current_neighbors_r1)}")
 
@@ -109,7 +113,9 @@ class TwitterEgoNetwork(EgoNetwork):
         new_edges = pd.json_normalize(new_edges)
 
         print(f"Writing new connections: {new_edges.shape}")
-        new_edges.to_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following_{run_time}.csv", index=False)
+        new_edges.to_csv(
+            f"{CLOUD_STORAGE_BUCKET}/data/users_following_{run_time}.csv", index=False
+        )
 
         pass
 
