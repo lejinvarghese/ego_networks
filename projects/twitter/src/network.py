@@ -68,7 +68,8 @@ class TwitterEgoNetwork(EgoNetwork):
 
     def retrieve_edges(self):
         """
-        TODO: Can we convert to recursive calls? or Loops?
+        TODO: Convert to recursive calls
+        TODO: Initialize with previous neighborhood
         TODO: Evaluate full import refresh frequency vs incremental refresh
         """
         self._focal_node_id = self._retrieve_node_features(
@@ -79,20 +80,20 @@ class TwitterEgoNetwork(EgoNetwork):
             f"Retrieving the ego network for {self._focal_node_id}, @max radius: {self._max_radius}"
         )
 
-        current_edges = dd.read_csv(
+        previous_edges = dd.read_csv(
             f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv"
         ).compute()
-        current_edges.following = current_edges.following.apply(ast.literal_eval)
-        current_edges = current_edges.explode("following")
+        previous_edges.following = previous_edges.following.apply(ast.literal_eval)
+        previous_edges = previous_edges.explode("following")
 
-        previous_neighbors_r1 = list(current_edges.user.unique())
-        previous_neighbors_r2 = list(current_edges.following.unique())
+        previous_neighbors_r1 = list(previous_edges.user.unique())
+        previous_neighbors_r2 = list(previous_edges.following.unique())
 
         previous_neighbors_r2 = list(
             set(previous_neighbors_r2) - set(previous_neighbors_r1)
         )
         print(
-            f"Previous neighbors \n@radius 1: {len(previous_neighbors_r1)} \n@radius 2: {len(previous_neighbors_r2)} \nPrevious connections: {current_edges.shape[0]}"
+            f"Previous neighbors \n@radius 1: {len(previous_neighbors_r1)} \n@radius 2: {len(previous_neighbors_r2)} \nPrevious connections: {previous_edges.shape[0]}"
         )
 
         current_neighbors_r1 = self._retrieve_node_out_neighbors(
