@@ -2,14 +2,14 @@
 Uses Twitter API v2.0 to extract out step neighbors of the focal node
 """
 
+import ast
 import os
 from abc import ABC, abstractmethod, abstractproperty
 import tweepy
 from dotenv import load_dotenv
 import time
 from datetime import datetime
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
+
 import pandas as pd
 import dask.dataframe as dd
 import tweepy
@@ -19,7 +19,6 @@ TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 
-n_threads = cpu_count() - 1
 run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
 
 
@@ -29,7 +28,7 @@ class EgoNetwork(ABC):
         pass
 
     @abstractproperty
-    def radius(self):
+    def max_radius(self):
         pass
 
     @abstractmethod
@@ -37,7 +36,7 @@ class EgoNetwork(ABC):
         pass
 
     @abstractmethod
-    def retrieve_nodes(self, node):
+    def retrieve_nodes(self):
         pass
 
     @abstractmethod
@@ -46,9 +45,9 @@ class EgoNetwork(ABC):
 
 
 class TwitterEgoNetwork(EgoNetwork):
-    def __init__(self, focal_node: str, radius: int, client=None):
+    def __init__(self, focal_node: str, max_radius: int, client=None):
         self._focal_node = focal_node
-        self._radius = int(radius)
+        self._max_radius = int(max_radius)
         self._client = client
 
     @property
@@ -56,8 +55,8 @@ class TwitterEgoNetwork(EgoNetwork):
         return self._focal_node
 
     @property
-    def radius(self):
-        return self._radius
+    def max_radius(self):
+        return self._max_radius
 
     @property
     def client(self):
@@ -68,15 +67,54 @@ class TwitterEgoNetwork(EgoNetwork):
         self._client = value
 
     def retrieve_edges(self):
-        existing_users = list(
-            dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv")
-            .compute()
-            .user.unique()
-        )
-        print(f"Previously following: {len(existing_users)}")
+        """
+        TODO: Can we convert to recursive calls? or Loops?
+        TODO: Evaluate full import refresh frequency vs incremental refresh
+        """
+        self._focal_node_id = self._retrieve_node_features(
+            user_fields=["id"], user_names=[self._focal_node]
+        )[0].id
 
-    def retrieve_nodes(self, node):
-        # _focal_node_user_id = self._retrieve_node_user_id()
+        print(
+            f"Retrieving the ego network for {self._focal_node_id}, @max radius: {self._max_radius}"
+        )
+
+        current_edges = dd.read_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv").compute()
+        current_edges.following = current_edges.following.apply(ast.literal_eval)
+        current_edges = current_edges.explode("following")
+
+        previous_neighbors_r1 = list(current_edges.user.unique())
+        previous_neighbors_r2 = list(current_edges.following.unique())
+
+        previous_neighbors_r2 = list(set(previous_neighbors_r2) - set(previous_neighbors_r1))
+        print(
+            f"Previous neighbors \n@radius 1: {len(previous_neighbors_r1)} \n@radius 2: {len(previous_neighbors_r2)} \nPrevious connections: {current_edges.shape[0]}"
+        )
+
+        current_neighbors_r1 = self._retrieve_node_out_neighbors(user_id=self._focal_node_id).get(
+            "following"
+        )
+
+        print(f"Current neighbors \n@radius 1: {len(current_neighbors_r1)}")
+
+        new_neighbors_r1 = list(set(current_neighbors_r1) - set(previous_neighbors_r1))
+
+        print(f"New neighbors \n@radius 1: {len(new_neighbors_r1)}")
+
+        new_edges = []
+        for u_id in new_neighbors_r1:
+            u_data = self._retrieve_node_out_neighbors(user_id=u_id)
+            new_edges.append(u_data)
+
+        new_edges = pd.json_normalize(new_edges)
+
+        print(f"Writing new connections: {new_edges.shape}")
+        new_edges.to_csv(f"{CLOUD_STORAGE_BUCKET}/data/users_following_{run_time}.csv", index=False)
+
+        pass
+
+    def retrieve_nodes(self):
+        # _focal_node_user_id = self._retrieve_node_user_ids()
         # return _focal_node_user_id
         pass
 
@@ -84,24 +122,45 @@ class TwitterEgoNetwork(EgoNetwork):
         pass
 
     def __copy__(self):
-        return TwitterEgoNetwork(self._focal_node, self._radius, self._client)
+        return TwitterEgoNetwork(self._focal_node, self._max_radius, self._client)
 
     def authenticate(self, api_bearer_token):
         client = tweepy.Client(api_bearer_token, wait_on_rate_limit=True)
         self._client = client
         return TwitterEgoNetwork.__copy__(self)
 
-    def _retrieve_node_user_id(self):
-        return self.client.get_user(
-            username=self._focal_node,
-            user_fields=["id"],
-        ).data.id
+    def _retrieve_node_features(self, user_fields, user_names=None, user_ids=None):
+
+        if user_ids:
+            return self.client.get_users(
+                ids=user_ids,
+                user_fields=user_fields,
+            ).data
+        elif user_names:
+            return self.client.get_users(
+                usernames=user_names,
+                user_fields=user_fields,
+            ).data
+        else:
+            raise ValueError("Either one of user_names or user_ids should be provided")
+
+    def _retrieve_node_out_neighbors(
+        self, user_id, max_results=1000, total_limit=5000, sleep_timer=0.1
+    ):
+        following = []
+        for o_n in tweepy.Paginator(
+            self.client.get_users_following, id=user_id, max_results=max_results
+        ).flatten(limit=total_limit):
+            time.sleep(sleep_timer)
+            following.append(o_n.id)
+        print(f"User: {user_id}, Following: {len(following)}")
+        return {"user": user_id, "following": following}
 
 
 def main():
-    tn = TwitterEgoNetwork(focal_node=TWITTER_USERNAME, radius=2)
+    tn = TwitterEgoNetwork(focal_node=TWITTER_USERNAME, max_radius=2)
     tn_a = tn.authenticate(api_bearer_token=TWITTER_API_BEARER_TOKEN)
-    print(f"Retrieving the Ego Network for {tn_a.focal_node}, of Radius: {tn_a.radius}")
+
     tn_a.retrieve_edges()
 
 

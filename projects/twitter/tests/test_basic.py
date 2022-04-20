@@ -1,5 +1,6 @@
 import pytest
 import os
+from projects.twitter.src.main import TWITTER_USERNAME
 from src.network import TwitterEgoNetwork
 from dotenv import load_dotenv
 
@@ -13,14 +14,12 @@ NETWORK_RADIUS = 1
 
 @pytest.fixture
 def twitter_network():
-    return TwitterEgoNetwork(
-        focal_node=TEST_TWITTER_USERNAMES[0], radius=NETWORK_RADIUS
-    )
+    return TwitterEgoNetwork(focal_node=TEST_TWITTER_USERNAMES[0], max_radius=NETWORK_RADIUS)
 
 
 def test_instantiation(twitter_network):
     assert twitter_network.focal_node == TEST_TWITTER_USERNAMES[0]
-    assert twitter_network.radius == NETWORK_RADIUS
+    assert twitter_network.max_radius == NETWORK_RADIUS
 
 
 @pytest.mark.parametrize(
@@ -32,13 +31,19 @@ def test_instantiation(twitter_network):
 )
 def test_twitter_authentication(twitter_network, user_id, expected):
     tn = twitter_network.authenticate(TWITTER_API_BEARER_TOKEN)
-    actual = (
-        tn.client.get_users(ids=[user_id], user_fields=["username"]).data[0].username
-    )
+    actual = tn.client.get_users(ids=[user_id], user_fields=["username"]).data[0].username
     assert actual == expected
 
 
-def test_user_id(twitter_network):
+def test_retrieve_node_features_id(twitter_network):
     tn = twitter_network.authenticate(TWITTER_API_BEARER_TOKEN)
-    actual = tn._retrieve_node_user_id()
+    actual = tn._retrieve_node_features(user_fields=["id"], user_names=[TEST_TWITTER_USERNAMES[0]])[
+        0
+    ].id
     assert actual == TEST_TWITTER_IDS[0]
+
+
+def test_retrieve_node_features_absent(twitter_network):
+    tn = twitter_network.authenticate(TWITTER_API_BEARER_TOKEN)
+    with pytest.raises(ValueError):
+        tn._retrieve_node_features(user_fields=["id"])
