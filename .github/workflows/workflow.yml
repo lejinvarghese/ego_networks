@@ -11,8 +11,7 @@ jobs:
                   version: 3.7
             - name: Generate coverage report
               run: |
-                  pip install pytest
-                  pip install pytest-cov
+                  pip install -r ./projects/twitter/requirements.txt
                   pytest --cov=./projects/twitter/src --cov-report=xml
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v1.0.3
