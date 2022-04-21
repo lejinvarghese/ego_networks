@@ -1,6 +1,6 @@
 # Ego Networks
 
-[![codecov](https://codecov.io/gh/lejinvarghese/graph_data_science/branch/master/graph/badge.svg?token=FSUFHB1IXZ)](https://codecov.io/gh/lejinvarghese/graph_data_science)
+[![codecov](https://codecov.io/gh/lejinvarghese/ego_networks/branch/master/graph/badge.svg?token=248C9C6ZHK)](https://codecov.io/gh/lejinvarghese/ego_networks)
 
 <p align="center">
     <img src="./assets/sample.png" alt="sample" width="500"/>
