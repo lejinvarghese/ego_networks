@@ -8,7 +8,7 @@
 
 ## Objectives
 
-An effort to study information flow and belief propogation through ego networks. The project aims to create a generic extensible framework for capturing, defining and curating measures\* for any ego network.
+An effort to study information flow and belief propogation through ego networks. The project aims to create a generic extensible framework for capturing, defining and curating measures for any ego network.
 
 -   We start with creating the two step neighborhood network for twitter social media, for the out neighbors. However, worth noting that the information flow is inward.
 
