@@ -12,7 +12,11 @@ from datetime import datetime
 import pandas as pd
 import dask.dataframe as dd
 import tweepy
-from src.network import EgoNetwork
+
+try:
+    from src.network import EgoNetwork
+except:
+    from ego_networks.src.network import EgoNetwork
 
 load_dotenv()
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")

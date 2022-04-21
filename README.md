@@ -23,6 +23,13 @@ An effort to study information flow and belief propogation through ego networks.
     <img src="https://cosnet.bifi.es/wp-content/uploads/2014/06/multiplex_networks_2a.jpg" alt="ego" width="500"/>
 </p>
 
--   Primary goal is to study (through observation and simulation) information and it's effects on users, potentially through a naive [Degroot Learning](https://en.wikipedia.org/wiki/DeGroot_learning) or through [Bayesian Learning](https://dahleh.lids.mit.edu/wp-content/uploads/2011/09/2008-BayesianLearningInSocialNetworks.pdf). [Slides](https://github.com/lejinvarghese/graph_data_science/blob/master/docs/social_economic_networks/w6-learning.pdf)
+-   Primary goal is to study (through observation and simulation) information and it's effects on users, potentially through a naive [Degroot Learning](https://en.wikipedia.org/wiki/DeGroot_learning) or through [Bayesian Learning](https://en.wikipedia.org/wiki/Mathematical_models_of_social_learning). 
+    -   [Stanford](https://github.com/lejinvarghese/graph_data_science/blob/master/docs/social_economic_networks/w6-learning.pdf)
+    -   [MIT](https://economics.mit.edu/files/4902)
+
+<p align="center">
+    <img src="https://bldavies.com/blog/degroot-learning-social-networks/figures/example-1.svg" alt="ego" width="500"/>
+</p>
+
 
 -   Secondary goal (and perhaps more immediate) is to fully take control of personalized recommendations of entities from the second step network.
