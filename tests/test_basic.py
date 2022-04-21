@@ -1,7 +1,10 @@
 import pytest
 import os
 
-from src.network import TwitterEgoNetwork
+try:
+    from src.network import TwitterEgoNetwork
+except:
+    from ego_networks.src.network import TwitterEgoNetwork
 from dotenv import load_dotenv
 
 load_dotenv()

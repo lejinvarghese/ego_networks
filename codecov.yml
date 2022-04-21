@@ -1,2 +1,0 @@
-fixes:
-    - "before/::" # reduce root e.g., "before/path/" => "path/"
