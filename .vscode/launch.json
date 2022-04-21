@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "internalConsole",
             "justMyCode": true,
-            "pythonPath": "/media/starscream/wheeljack1/projects/courses/graph_data_science/projects/twitter/.venv/bin/python"
+            "python": "/media/starscream/wheeljack1/projects/courses/graph_data_science/.venv/bin/python"
         }
     ]
 }

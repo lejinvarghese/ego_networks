@@ -13,8 +13,8 @@ jobs:
               env:
                   TWITTER_API_BEARER_TOKEN: ${{ secrets.TWITTER_API_BEARER_TOKEN }}
               run: |
-                  pip install -r ./projects/twitter/requirements.txt
-                  pytest --cov=./projects/twitter/src --cov-report=xml
+                  pip install -r ./requirements.txt
+                  pytest --cov=./src --cov-report=xml
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v1.0.3
               with:
