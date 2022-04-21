@@ -10,6 +10,7 @@ PROJECT = str(Path(PATH).parents[0])
 
 def sample_knowledge_graph():
     import networkx as nx
+
     graph = nx.DiGraph()
     graph.add_edges_from(
         [
@@ -146,7 +147,9 @@ def draw_interaction_graph(
     import matplotlib.pyplot as plt
 
     color_map = [second_color for i in range(graph.number_of_nodes())]
-    color_map[: graph.number_of_nodes()] = [first_color for i in range(graph.number_of_nodes())]
+    color_map[: graph.number_of_nodes()] = [
+        first_color for i in range(graph.number_of_nodes())
+    ]
     fig = plt.figure(figsize=(10, 10))
     pos = nx.circular_layout(graph) if pos == "c" else nx.kamada_kawai_layout(graph)
     nx.draw(
@@ -192,7 +195,11 @@ def draw_plotly_graph(
         edge_y.append(None)
 
     edge_trace = go.Scatter(
-        x=edge_x, y=edge_y, line=dict(width=0.5, color="#888"), hoverinfo="none", mode="lines"
+        x=edge_x,
+        y=edge_y,
+        line=dict(width=0.5, color="#888"),
+        hoverinfo="none",
+        mode="lines",
     )
 
     node_x = []
