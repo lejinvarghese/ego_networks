@@ -5,8 +5,6 @@ This can serve as the refactoring base for later implementations.
 import os
 from dotenv import load_dotenv
 import time
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
 import pandas as pd
 import numpy as np
 import dask.dataframe as dd
@@ -18,7 +16,6 @@ load_dotenv()
 pd.set_option("display.max_columns", 500)
 pd.set_option("display.width", 1000)
 
-n_threads = cpu_count() - 1
 run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY")
