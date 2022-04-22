@@ -98,7 +98,8 @@ class TwitterEgoNetwork(EgoNetwork):
 
         print(f"Writing new connections: {new_edges.shape}")
         new_edges.to_csv(
-            f"{CLOUD_STORAGE_BUCKET}/data/users_following_{run_time}.csv", index=False
+            f"{CLOUD_STORAGE_BUCKET}/data/users_following_{run_time}.csv",
+            index=False,
         )
 
         pass
