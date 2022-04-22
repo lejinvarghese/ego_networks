@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Uses Twitter API v2.0 to extract out step neighbors of the focal node
 """

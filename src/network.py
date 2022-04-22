@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Extracts Twitter API v2.0 to extract forward one hop neighbors of followed users
 """

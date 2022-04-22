@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This can serve as the refactoring base for later implementations.
 """
