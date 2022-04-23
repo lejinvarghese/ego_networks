@@ -165,14 +165,16 @@ class TwitterEgoNetwork(EgoNetwork):
         return new_ties, _all_alters[~np.isnan(_all_alters)].astype(int)
 
     def update_alter_features(self, alters):
+        try:
+            previous_alters_with_features = list(
+                self.previous_alter_features.id.unique()
+            )
 
-        previous_alters_with_features = list(
-            self.previous_alter_features.id.unique()
-        )
-
-        print(
-            f"Previous alters with features: {len(previous_alters_with_features)}"
-        )
+            print(
+                f"Previous alters with features: {len(previous_alters_with_features)}"
+            )
+        except AttributeError:
+            previous_alters_with_features = []
 
         new_alters = list(set(alters) - set(previous_alters_with_features))
 
