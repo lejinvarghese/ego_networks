@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
 
-import pandas as pd
 import pytest
-import random
+from networkx import DiGraph
+from pandas import DataFrame
 
 try:
     from src.twitter_network import TwitterEgoNetwork
@@ -68,7 +68,7 @@ def test_retrieve_node_features_absent(twitter_network):
 
 def test_retrieve_alter_features(twitter_network):
     actual = twitter_network.update_alter_features(
-        alters=random.sample(range(1, 10000), 3)
+        alters=[999, 9999, 99999, 77777]
     )
     alter_return_fields = [
         "id",
@@ -80,7 +80,14 @@ def test_retrieve_alter_features(twitter_network):
         "withheld",
     ]
 
-    assert type(actual) == pd.DataFrame
+    assert type(actual) == DataFrame
     assert set(actual.columns.values) == set(alter_return_fields)
     assert actual.shape[0] > 0
     assert actual.shape[1] == len(alter_return_fields)
+
+
+def test_create_network(twitter_network):
+    actual = twitter_network.create_network()
+    assert type(actual) == DiGraph
+    assert actual.number_of_nodes() > 0
+    assert actual.number_of_edges() > 0
