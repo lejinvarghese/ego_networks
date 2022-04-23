@@ -75,7 +75,7 @@ class TwitterEgoNetwork(EgoNetwork):
             set(previous_alters_r2) - set(previous_alters_r1)
         )
         print(
-            f"Previous neighbors \n@radius 1: {len(previous_alters_r1)} \n@radius 2: {len(previous_alters_r2)} \nPrevious connections: {previous_ties.shape[0]}"
+            f"Previous neighbors \n@radius 1: {len(previous_alters_r1)} \n@radius 2: {len(previous_alters_r2)} \nPrevious connections: {self.previous_ties.shape[0]}"
         )
 
         current_alters_r1 = self.retrieve_ties(user_id=self._focal_node_id).get(
@@ -158,7 +158,6 @@ class TwitterEgoNetwork(EgoNetwork):
 def main():
     tn = TwitterEgoNetwork(focal_node=TWITTER_USERNAME, max_radius=2)
     tn_a = tn.authenticate(api_bearer_token=TWITTER_API_BEARER_TOKEN)
-
     tn_a.create_neighborhood()
 
 
