@@ -66,7 +66,9 @@ class TwitterEgoNetwork(EgoNetwork):
         previous_edges = dd.read_csv(
             f"{CLOUD_STORAGE_BUCKET}/data/users_following*.csv"
         ).compute()
-        previous_edges.following = previous_edges.following.apply(ast.literal_eval)
+        previous_edges.following = previous_edges.following.apply(
+            ast.literal_eval
+        )
         previous_edges = previous_edges.explode("following")
 
         previous_neighbors_r1 = list(previous_edges.user.unique())
@@ -85,7 +87,9 @@ class TwitterEgoNetwork(EgoNetwork):
 
         print(f"Current neighbors \n@radius 1: {len(current_neighbors_r1)}")
 
-        new_neighbors_r1 = list(set(current_neighbors_r1) - set(previous_neighbors_r1))
+        new_neighbors_r1 = list(
+            set(current_neighbors_r1) - set(previous_neighbors_r1)
+        )
 
         print(f"New neighbors \n@radius 1: {len(new_neighbors_r1)}")
 
@@ -113,14 +117,18 @@ class TwitterEgoNetwork(EgoNetwork):
         pass
 
     def __copy__(self):
-        return TwitterEgoNetwork(self._focal_node, self._max_radius, self._client)
+        return TwitterEgoNetwork(
+            self._focal_node, self._max_radius, self._client
+        )
 
     def authenticate(self, api_bearer_token):
         client = tweepy.Client(api_bearer_token, wait_on_rate_limit=True)
         self._client = client
         return TwitterEgoNetwork.__copy__(self)
 
-    def _retrieve_node_features(self, user_fields, user_names=None, user_ids=None):
+    def _retrieve_node_features(
+        self, user_fields, user_names=None, user_ids=None
+    ):
 
         if user_ids:
             return self.client.get_users(
@@ -133,7 +141,9 @@ class TwitterEgoNetwork(EgoNetwork):
                 user_fields=user_fields,
             ).data
         else:
-            raise ValueError("Either one of user_names or user_ids should be provided")
+            raise ValueError(
+                "Either one of user_names or user_ids should be provided"
+            )
 
     def _retrieve_node_out_neighbors(
         self, user_id, max_results=1000, total_limit=5000, sleep_timer=0.1
