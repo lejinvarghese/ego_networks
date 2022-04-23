@@ -139,7 +139,7 @@ class TwitterEgoNetwork(EgoNetwork):
         client = tweepy.Client(api_bearer_token, wait_on_rate_limit=True)
         return client
 
-    def __retrieve_previoeus_ties(self, storage_bucket):
+    def __retrieve_previous_ties(self, storage_bucket):
         try:
             previous_ties = dd.read_csv(
                 f"{storage_bucket}/data/users_following*.csv"
