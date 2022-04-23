@@ -2,7 +2,7 @@
 """
 Extracts Twitter API v2.0 to extract forward one hop neighbors of followed users
 """
-from abc import ABC, abstractproperty, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 
 class EgoNetwork(ABC):
@@ -15,13 +15,17 @@ class EgoNetwork(ABC):
         pass
 
     @abstractmethod
-    def retrieve_edges(self):
+    def create_neighborhood(self):
         pass
 
     @abstractmethod
-    def retrieve_nodes(self):
+    def retrieve_ties(self):
         pass
 
     @abstractmethod
-    def create_network(self):
+    def retrieve_tie_features(self):
+        pass
+
+    @abstractmethod
+    def retrieve_node_features(self):
         pass

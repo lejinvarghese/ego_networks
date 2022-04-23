@@ -133,3 +133,4 @@ websocket-client==1.3.2
 yarl==1.7.2
 pylint
 pre-commit
+isort
