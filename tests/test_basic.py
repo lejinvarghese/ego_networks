@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import pytest
+import random
 
 try:
     from src.twitter_network import TwitterEgoNetwork
@@ -66,7 +67,7 @@ def test_retrieve_node_features_absent(twitter_network):
 
 def test_retrieve_alter_features(twitter_network):
     actual = twitter_network.update_alter_features(
-        alters=[12321, 123321, 56565654]
+        alters=random.sample(range(1, 10000), 3)
     ) 
     alter_return_fields = [
         "id",
