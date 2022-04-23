@@ -65,10 +65,11 @@ def test_retrieve_node_features_absent(twitter_network):
     with pytest.raises(ValueError):
         twitter_network.retrieve_node_features(user_fields=["id"])
 
+
 def test_retrieve_alter_features(twitter_network):
     actual = twitter_network.update_alter_features(
         alters=random.sample(range(1, 10000), 3)
-    ) 
+    )
     alter_return_fields = [
         "id",
         "name",
