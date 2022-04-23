@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
 
+import pandas as pd
 import pytest
+import random
 
 try:
     from src.twitter_network import TwitterEgoNetwork
@@ -15,6 +17,7 @@ load_dotenv()
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 TEST_TWITTER_IDS = [44196397, 2622261]
 TEST_TWITTER_USERNAMES = ["elonmusk", "bulicny"]
+CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 NETWORK_RADIUS = 1
 
 
@@ -24,6 +27,7 @@ def twitter_network():
         focal_node=TEST_TWITTER_USERNAMES[0],
         max_radius=NETWORK_RADIUS,
         api_bearer_token=TWITTER_API_BEARER_TOKEN,
+        storage_bucket=CLOUD_STORAGE_BUCKET,
     )
 
 
@@ -41,7 +45,9 @@ def test_instantiation(twitter_network):
 )
 def test_authentication(twitter_network, user_id, expected):
     actual = (
-        twitter_network.client.get_users(ids=[user_id], user_fields=["username"])
+        twitter_network.client.get_users(
+            ids=[user_id], user_fields=["username"]
+        )
         .data[0]
         .username
     )
@@ -58,3 +64,23 @@ def test_retrieve_node_features_id(twitter_network):
 def test_retrieve_node_features_absent(twitter_network):
     with pytest.raises(ValueError):
         twitter_network.retrieve_node_features(user_fields=["id"])
+
+
+def test_retrieve_alter_features(twitter_network):
+    actual = twitter_network.update_alter_features(
+        alters=random.sample(range(1, 10000), 3)
+    )
+    alter_return_fields = [
+        "id",
+        "name",
+        "profile_image_url",
+        "public_metrics",
+        "username",
+        "verified",
+        "withheld",
+    ]
+
+    assert type(actual) == pd.DataFrame
+    assert set(actual.columns.values) == set(alter_return_fields)
+    assert actual.shape[0] > 0
+    assert actual.shape[1] == len(alter_return_fields)

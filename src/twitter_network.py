@@ -8,8 +8,10 @@ import ast
 import os
 import time
 from datetime import datetime
+from warnings import filterwarnings
 
 import dask.dataframe as dd
+import numpy as np
 import pandas as pd
 import tweepy
 from dotenv import load_dotenv
@@ -20,10 +22,10 @@ except ModuleNotFoundError:
     from ego_networks.src.network import EgoNetwork
 
 load_dotenv()
+filterwarnings("ignore")
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
-
 run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
 
 
@@ -37,8 +39,16 @@ class TwitterEgoNetwork(EgoNetwork):
     ):
         self._focal_node = focal_node
         self._max_radius = int(max_radius)
-        self._client = self.__authenticate(api_bearer_token)
-        self._previous_ties = self.__retrieve_previous_ties(storage_bucket)
+        self._api_bearer_token = api_bearer_token
+        self._storage_bucket = storage_bucket
+        self._client = self.__authenticate()
+        self._previous_ties = self.__retrieve_previous_ties()
+        self._previous_alter_features = (
+            self.__retrieve_previous_alter_features()
+        )
+        self._focal_node_id = self.retrieve_node_features(
+            user_fields=["id"], user_names=[self._focal_node]
+        )[0].id
 
     @property
     def focal_node(self):
@@ -47,6 +57,14 @@ class TwitterEgoNetwork(EgoNetwork):
     @property
     def max_radius(self):
         return self._max_radius
+
+    @property
+    def api_bearer_token(self):
+        return self._api_bearer_token
+
+    @property
+    def storage_bucket(self):
+        return self._storage_bucket
 
     @property
     def client(self):
@@ -60,37 +78,68 @@ class TwitterEgoNetwork(EgoNetwork):
     def previous_ties(self):
         return self._previous_ties
 
-    def create_neighborhood(self):
+    @property
+    def previous_alter_features(self):
+        return self._previous_alter_features
+
+    @property
+    def focal_node_id(self):
+        return self._focal_node_id
+
+    def update_network(self):
+        pass
+
+    def update_neighborhood(self):
         """
-        TODO: Convert to recursive calls
-        TODO: Initialize with previous neighborhood
-        TODO: Evaluate full import refresh frequency vs incremental refresh
+        Updates the neighborhood of the focal node
         """
-        self._focal_node_id = self.retrieve_node_features(
-            user_fields=["id"], user_names=[self._focal_node]
-        )[0].id
 
         print(
-            f"Retrieving the ego network for {self._focal_node_id}, @max radius: {self._max_radius}"
+            f"Updating the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
         )
+
+        _new_ties, _all_alters = self.update_ties()
+        _new_alter_features = self.update_alter_features(_all_alters)
+
+        if _new_alter_features.shape[0] > 0:
+            print(f"Writing new alter features: {_new_alter_features.shape}")
+            _new_alter_features.to_csv(
+                f"{self._storage_bucket}/data/node_features_{run_time}.csv",
+                index=False,
+            )
+        else:
+            print(f"No new alter features to update neighborhood")
+
+        if _new_ties.shape[0] > 0:
+            print(f"Writing new ties: {_new_ties.shape}")
+            _new_ties.to_csv(
+                f"{self._storage_bucket}/data/users_following_{run_time}.csv",
+                index=False,
+            )
+        else:
+            print(f"No new ties to update neighborhood")
+
+    def update_ties(self):
 
         previous_alters_r1 = list(self.previous_ties.user.unique())
         previous_alters_r2 = list(self.previous_ties.following.unique())
 
-        previous_alters_r2 = list(set(previous_alters_r2) - set(previous_alters_r1))
+        previous_alters_r2 = list(
+            set(previous_alters_r2) - set(previous_alters_r1)
+        )
         print(
-            f"Previous neighbors \n@radius 1: {len(previous_alters_r1)} \n@radius 2: {len(previous_alters_r2)} \nPrevious connections: {self.previous_ties.shape[0]}"
+            f"Previous alters \n@radius 1: {len(previous_alters_r1)} \n@radius 2: {len(previous_alters_r2)} \nPrevious ties: {self.previous_ties.shape[0]}"
         )
 
         current_alters_r1 = self.retrieve_ties(user_id=self._focal_node_id).get(
             "following"
         )
 
-        print(f"Current neighbors \n@radius 1: {len(current_alters_r1)}")
+        print(f"Current alters \n@radius 1: {len(current_alters_r1)}")
 
         new_alters_r1 = list(set(current_alters_r1) - set(previous_alters_r1))
 
-        print(f"New neighbors \n@radius 1: {len(new_alters_r1)}")
+        print(f"New alters \n@radius 1: {len(new_alters_r1)}")
 
         new_ties = []
         for u_id in new_alters_r1:
@@ -99,11 +148,69 @@ class TwitterEgoNetwork(EgoNetwork):
 
         new_ties = pd.json_normalize(new_ties)
 
-        print(f"Writing new connections: {new_ties.shape}")
-        new_ties.to_csv(
-            f"{CLOUD_STORAGE_BUCKET}/data/users_following_{run_time}.csv",
-            index=False,
+        if new_ties.shape[0] > 0:
+            new_alters_r2 = new_ties.following.unique()
+        else:
+            new_alters_r1 = new_alters_r2 = set()
+        _all_alters = np.array(
+            list(
+                (
+                    set(new_alters_r1)
+                    | set(new_alters_r2)
+                    | set(previous_alters_r1)
+                    | set(previous_alters_r2)
+                )
+            )
         )
+        return new_ties, _all_alters[~np.isnan(_all_alters)].astype(int)
+
+    def update_alter_features(self, alters):
+        try:
+            previous_alters_with_features = list(
+                self.previous_alter_features.id.unique()
+            )
+
+            print(
+                f"Previous alters with features: {len(previous_alters_with_features)}"
+            )
+        except AttributeError:
+            previous_alters_with_features = []
+
+        new_alters = list(set(alters) - set(previous_alters_with_features))
+
+        print(
+            f"All alters within radius {self._max_radius}: {len(alters)}, \nNew alters: {len(new_alters)}"
+        )
+
+        max_api_batch_size = 100
+        if len(new_alters) > max_api_batch_size:
+            new_alter_batches = self.__get_batches(
+                new_alters, batch_size=max_api_batch_size
+            )
+        else:
+            new_alter_batches = [new_alters]
+
+        new_alter_features = []
+        alter_feature_fields = [
+            "profile_image_url",
+            "username",
+            "public_metrics",
+            "verified",
+        ]
+        for batch in new_alter_batches:
+            time.sleep(0.1)
+            new_alter_features.append(
+                pd.DataFrame(
+                    self.retrieve_node_features(
+                        user_fields=alter_feature_fields,
+                        user_ids=batch,
+                    )
+                )
+            )
+
+        new_alter_features = pd.concat(new_alter_features)
+        new_alter_features["withheld"] = None
+        return new_alter_features
 
     def retrieve_ties(
         self, user_id, max_results=1000, total_limit=5000, sleep_timer=0.1
@@ -120,7 +227,9 @@ class TwitterEgoNetwork(EgoNetwork):
     def retrieve_tie_features(self):
         pass
 
-    def retrieve_node_features(self, user_fields, user_names=None, user_ids=None):
+    def retrieve_node_features(
+        self, user_fields, user_names=None, user_ids=None
+    ):
 
         if user_ids:
             return self.client.get_users(
@@ -133,25 +242,51 @@ class TwitterEgoNetwork(EgoNetwork):
                 user_fields=user_fields,
             ).data
         else:
-            raise ValueError("Either one of user_names or user_ids should be provided")
+            raise ValueError(
+                "Either one of user_names or user_ids should be provided"
+            )
 
-    def __authenticate(self, api_bearer_token):
-        client = tweepy.Client(api_bearer_token, wait_on_rate_limit=True)
+    def __authenticate(self):
+        client = tweepy.Client(self._api_bearer_token, wait_on_rate_limit=True)
         return client
 
-    def __retrieve_previous_ties(self, storage_bucket):
+    def __retrieve_previous_ties(self):
         try:
             previous_ties = dd.read_csv(
-                f"{storage_bucket}/data/users_following*.csv"
+                f"{self._storage_bucket}/data/users_following*.csv"
             ).compute()
             print(f"Storage bucket authenticated")
-            previous_ties.following = previous_ties.following.apply(ast.literal_eval)
+            previous_ties.following = previous_ties.following.apply(
+                ast.literal_eval
+            )
             previous_ties = previous_ties.explode("following")
         except Exception as error:
             print(f"Storage bucket not found, {error}")
             previous_ties = pd.DataFrame()
 
         return previous_ties
+
+    def __retrieve_previous_alter_features(self):
+        try:
+            previous_alter_features = dd.read_csv(
+                f"{self._storage_bucket}/data/node_features*.csv",
+                dtype={"withheld": "object"},
+            ).compute()
+            print(f"Storage bucket authenticated")
+        except Exception as error:
+            print(f"Storage bucket not found, {error}")
+            previous_alter_features = pd.DataFrame()
+
+        return previous_alter_features
+
+    def __get_batches(self, src_list: list, batch_size: int):
+        batches = np.array_split(src_list, len(src_list) // (batch_size - 1))
+        batches = [batch.tolist() for batch in batches]
+
+        print(
+            f"Total batches: {np.shape(batches)[0]}, batch size:{np.shape(batches[0])[0]}"
+        )
+        return batches
 
 
 def main():
@@ -161,7 +296,7 @@ def main():
         api_bearer_token=TWITTER_API_BEARER_TOKEN,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
-    ego_network.create_neighborhood()
+    ego_network.update_neighborhood()
 
 
 if __name__ == "__main__":

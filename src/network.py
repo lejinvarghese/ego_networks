@@ -15,7 +15,11 @@ class EgoNetwork(ABC):
         pass
 
     @abstractmethod
-    def create_neighborhood(self):
+    def update_network(self):
+        pass
+
+    @abstractmethod
+    def update_neighborhood(self):
         pass
 
     @abstractmethod

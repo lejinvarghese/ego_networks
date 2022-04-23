@@ -152,7 +152,11 @@ def draw_interaction_graph(
         first_color for i in range(graph.number_of_nodes())
     ]
     fig = plt.figure(figsize=(10, 10))
-    pos = nx.circular_layout(graph) if pos == "c" else nx.kamada_kawai_layout(graph)
+    pos = (
+        nx.circular_layout(graph)
+        if pos == "c"
+        else nx.kamada_kawai_layout(graph)
+    )
     nx.draw(
         graph,
         with_labels=True,
@@ -238,7 +242,9 @@ def draw_plotly_graph(
         _node_labels = []
         for node, adjacencies in enumerate(graph.adjacency()):
             node_adjacencies.append(len(adjacencies[1]))
-            _node_labels.append("adjacent connections: " + str(len(adjacencies[1])))
+            _node_labels.append(
+                "adjacent connections: " + str(len(adjacencies[1]))
+            )
     node_trace.text = _node_labels
 
     if node_colors == "default":
