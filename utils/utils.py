@@ -86,8 +86,8 @@ def draw_nx_graph(
     if you are passing a graph parameters.
     For smaller subgraphs pass nx.circular_layout for pos.
     """
-    import networkx as nx
     import matplotlib.pyplot as plt
+    import networkx as nx
 
     if pos:
         _pos = pos
@@ -144,8 +144,8 @@ def get_ego_graph(graph, edge_labels=None, node="Tom", radius=1):
 def draw_interaction_graph(
     graph, pos=None, first_color="red", second_color="black", font_color="w"
 ):
-    import networkx as nx
     import matplotlib.pyplot as plt
+    import networkx as nx
 
     color_map = [second_color for i in range(graph.number_of_nodes())]
     color_map[: graph.number_of_nodes()] = [
@@ -178,8 +178,8 @@ def draw_plotly_graph(
     hide_color_axis=True,
 ):
 
-    import plotly.graph_objects as go
     import networkx as nx
+    import plotly.graph_objects as go
 
     edge_x = []
     edge_y = []

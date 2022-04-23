@@ -6,16 +6,17 @@ PATH = os.path.abspath(".")
 os.environ["KMP_WARNINGS"] = "FALSE"
 sys.path.insert(1, PATH)
 
-from utils import timer, draw_graph_interactive
 from warnings import filterwarnings
+
+import community as community_louvain
+import networkx as nx
 import numpy as np
 import pandas as pd
-
 import tensorflow as tf
 import tensorflow_hub as hub
-from faiss import get_num_gpus, IndexFlatL2, index_cpu_to_all_gpus
-import networkx as nx
-import community as community_louvain
+from faiss import IndexFlatL2, get_num_gpus, index_cpu_to_all_gpus
+
+from utils import draw_graph_interactive, timer
 
 tf.get_logger().setLevel("ERROR")
 filterwarnings("ignore")
