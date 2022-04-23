@@ -45,7 +45,7 @@ def test_twitter_authentication(twitter_network, user_id, expected):
 
 def test_retrieve_node_features_id(twitter_network):
     tn = twitter_network.authenticate(TWITTER_API_BEARER_TOKEN)
-    actual = tn._retrieve_node_features(
+    actual = tn.retrieve_node_features(
         user_fields=["id"], user_names=[TEST_TWITTER_USERNAMES[0]]
     )[0].id
     assert actual == TEST_TWITTER_IDS[0]
@@ -54,4 +54,4 @@ def test_retrieve_node_features_id(twitter_network):
 def test_retrieve_node_features_absent(twitter_network):
     tn = twitter_network.authenticate(TWITTER_API_BEARER_TOKEN)
     with pytest.raises(ValueError):
-        tn._retrieve_node_features(user_fields=["id"])
+        tn.retrieve_node_features(user_fields=["id"])
