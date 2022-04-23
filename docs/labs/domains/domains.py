@@ -41,10 +41,14 @@ def get_similarities(embeddings, tokens):
     D, I = gpu_index.search(embeddings, top_neighbors)
 
     I = pd.DataFrame(
-        I, columns=["item_" + str(i) for i in range(top_neighbors)], index=tokens
+        I,
+        columns=["item_" + str(i) for i in range(top_neighbors)],
+        index=tokens,
     )
     D = pd.DataFrame(
-        D, columns=["score_" + str(i) for i in range(top_neighbors)], index=tokens
+        D,
+        columns=["score_" + str(i) for i in range(top_neighbors)],
+        index=tokens,
     )
     similar_tokens = I.applymap(lambda x: tokens[x].title())
     similar_scores = D.applymap(lambda x: np.round(1 - x, 4))
@@ -71,7 +75,9 @@ def get_similarities(embeddings, tokens):
         (similar_tokens.sim_score_min >= -0.15) | (similar_tokens.sim_rank <= 2)
     ]
     similar_tokens["sim_score"] = (
-        similar_tokens["sim_score"] + abs(similar_tokens["sim_score"].min()) + 0.001
+        similar_tokens["sim_score"]
+        + abs(similar_tokens["sim_score"].min())
+        + 0.001
     )
     similar_tokens.drop(columns=["sim_score_min", "sim_rank"], inplace=True)
 
@@ -129,7 +135,11 @@ if __name__ == "__main__":
 
     similar_tokens = get_similarities(embeddings, tokens)
     similar_tokens.rename(
-        columns={"ref_item": "source", "comp_item": "target", "sim_score": "weight"},
+        columns={
+            "ref_item": "source",
+            "comp_item": "target",
+            "sim_score": "weight",
+        },
         inplace=True,
     )
     print(similar_tokens.head(10))
@@ -142,6 +152,8 @@ if __name__ == "__main__":
 
     color_map = community_louvain.best_partition(G, resolution=0.5)
 
-    fig = draw_graph_interactive(G, color_map=color_map, size_map=size_map, title=" ")
+    fig = draw_graph_interactive(
+        G, color_map=color_map, size_map=size_map, title=" "
+    )
     fig.write_html("domains/output.html")
     fig.write_image("domains/output.png", scale=3.0)
