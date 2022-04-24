@@ -31,6 +31,29 @@ def twitter_network():
     )
 
 
+@pytest.fixture
+def sample_node_features():
+    return DataFrame(
+        {
+            "id": [999, 777],
+            "name": ["a", "b"],
+            "username": ["us", "ut"],
+        }
+    )
+
+
+@pytest.fixture
+def sample_alters():
+    return [999, 9999, 99999, 77777]
+
+
+@pytest.fixture
+def sample_edges():
+    return DataFrame(
+        {"user": [999, 777, 999], "following": [777, 999, 111]},
+    )
+
+
 def test_instantiation(twitter_network):
     assert twitter_network.focal_node == TEST_TWITTER_USERNAMES[0]
     assert twitter_network.max_radius == MAX_RADIUS
@@ -66,10 +89,8 @@ def test_retrieve_node_features_absent(twitter_network):
         twitter_network.retrieve_node_features(user_fields=["id"])
 
 
-def test_retrieve_alter_features(twitter_network):
-    actual = twitter_network.update_alter_features(
-        alters=[999, 9999, 99999, 77777]
-    )
+def test_retrieve_alter_features(twitter_network, sample_alters):
+    actual = twitter_network.update_alter_features(alters=sample_alters)
     alter_return_fields = [
         "id",
         "name",
@@ -86,8 +107,10 @@ def test_retrieve_alter_features(twitter_network):
     assert actual.shape[1] == len(alter_return_fields)
 
 
-def test_create_network(twitter_network):
-    actual = twitter_network.create_network()
+def test_create_network(twitter_network, sample_edges, sample_node_features):
+    actual = twitter_network.create_network(
+        sample_edges, sample_node_features, sample=True
+    )
     assert type(actual) == DiGraph
     assert actual.number_of_nodes() > 0
     assert actual.number_of_edges() > 0

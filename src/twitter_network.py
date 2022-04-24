@@ -87,11 +87,12 @@ class TwitterEgoNetwork(EgoNetwork):
     def focal_node_id(self):
         return self._focal_node_id
 
-    def create_network(self):
-        edges = self._previous_ties.copy().dropna()
-        nodes = self._previous_alter_features.copy().set_index("id")
-        edges.columns = ["source", "target"]
+    def create_network(self, edges=None, nodes=None, sample=False):
+        if not sample:
+            edges = self._previous_ties.copy().dropna()
+            nodes = self._previous_alter_features.copy().set_index("id")
 
+        edges.columns = ["source", "target"]
         edges["source"] = edges["source"].astype(int)
         edges["target"] = edges["target"].astype(int)
         edges["weight"] = 1
