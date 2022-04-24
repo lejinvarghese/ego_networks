@@ -26,7 +26,8 @@ def read_data(file_path, data_type):
             data = dd.read_csv(f"{file_path}/data/{data_type}*.csv").compute()
             print(f"Read successful: {data_type}")
             data.following = data.following.apply(ast.literal_eval)
-            return data.explode("following")
+            data = data.explode("following")
+            return data.dropna()
         elif data_type == "node_features":
             data = dd.read_csv(
                 f"{file_path}/data/{data_type}*.csv",

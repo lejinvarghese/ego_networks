@@ -4,10 +4,8 @@ Uses Twitter API v2.0 to extract out step neighbors of the focal node
 """
 
 
-import ast
 import os
 import time
-from datetime import datetime
 from warnings import filterwarnings
 
 import networkx as nx
@@ -15,11 +13,11 @@ import pandas as pd
 from dotenv import load_dotenv
 
 try:
-    from src.core import EgoNeighborhood
+    from src.core import EgoNeighborhood, EgoNetwork
     from utils.api.twitter import authenticate, get_users, get_users_following
     from utils.generic import read_data, split_into_batches, write_data
 except ModuleNotFoundError:
-    from ego_networks.src.core import EgoNeighborhood
+    from ego_networks.src.core import EgoNeighborhood, EgoNetwork
     from ego_networks.utils.api.twitter import (
         authenticate,
         get_users,
@@ -35,6 +33,7 @@ load_dotenv()
 filterwarnings("ignore")
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
+INTEGRATED_FOCAL_NODE_ID = os.getenv("INTEGRATED_FOCAL_NODE_ID")
 CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 
 
@@ -43,8 +42,8 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         self,
         focal_node: str,
         max_radius: int,
-        api_bearer_token=None,
-        storage_bucket=None,
+        api_bearer_token: str = None,
+        storage_bucket: str = None,
     ):
         self._layer = "twitter"
         self._focal_node = focal_node
@@ -92,29 +91,6 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
     @property
     def focal_node_id(self):
         return self._focal_node_id
-
-    def create_network(self, edges=None, nodes=None, sample=False):
-        if not sample:
-            edges = self._previous_ties.copy().dropna()
-            nodes = self._previous_node_features.copy().set_index("id")
-
-        edges.columns = ["source", "target"]
-        edges["source"] = edges["source"].astype(int)
-        edges["target"] = edges["target"].astype(int)
-        edges["weight"] = 1
-        G = nx.from_pandas_edgelist(
-            edges, create_using=nx.DiGraph(), edge_attr=True
-        )
-        for feature in nodes:
-            nx.set_node_attributes(
-                G,
-                pd.Series(nodes[feature]).to_dict(),
-                feature,
-            )
-
-        print(f"Nodes: {len(G.nodes())}, Edges: {len(G.edges())}")
-        print(f"Nodes with Features: {nodes.shape[0]}")
-        return G
 
     def update_neighborhood(self):
         """
@@ -256,6 +232,71 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         return new_node_features
 
 
+class HomogenousEgoNetwork(EgoNetwork):
+    def __init__(
+        self,
+        focal_node_id: str,
+        n_layers: int = 1,
+        radius: int = 2,
+        storage_bucket: str = None,
+    ):
+        self._focal_node_id = focal_node_id
+        self._n_layers = n_layers
+        self._radius = radius
+        self._storage_bucket = storage_bucket
+
+    @property
+    def n_layers(self):
+        return self._n_layers
+
+    @property
+    def radius(self):
+        return self._radius
+
+    @property
+    def focal_node_id(self):
+        return self._focal_node_id
+
+    def create(self, edges=None, nodes=None):
+
+        if self._storage_bucket is not None:
+            edges = read_data(self._storage_bucket, data_type="ties")
+            nodes = read_data(
+                self._storage_bucket, data_type="node_features"
+            ).set_index("id")
+
+        if (edges is None) | (nodes is None):
+            raise ValueError(
+                "Must provide sample edges and nodes or a storage bucket to read the neighborhood from."
+            )
+
+        edges.columns = ["source", "target"]
+        edges["source"] = edges["source"].astype(int)
+        edges["target"] = edges["target"].astype(int)
+        edges["weight"] = 1
+        G = nx.from_pandas_edgelist(
+            edges, create_using=nx.DiGraph(), edge_attr=True
+        )
+        for feature in nodes:
+            nx.set_node_attributes(
+                G,
+                pd.Series(nodes[feature]).to_dict(),
+                feature,
+            )
+
+        G_e = nx.ego_graph(
+            G, int(self._focal_node_id), radius=self._radius, undirected=False
+        )
+        print(
+            f"Ego network of layers: {self._n_layers}, radius: {self._radius} created."
+        )
+        print(f"Nodes: {len(G_e.nodes())}, Edges: {len(G_e.edges())}")
+        return G_e
+
+    def calculate_metrics(self):
+        pass
+
+
 def main():
     twitter_hood = TwitterEgoNeighborhood(
         focal_node=TWITTER_USERNAME,
@@ -264,7 +305,13 @@ def main():
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
     twitter_hood.update_neighborhood()
-    G = twitter_hood.create_network()
+    network = HomogenousEgoNetwork(
+        focal_node_id=INTEGRATED_FOCAL_NODE_ID,
+        radius=1,
+        storage_bucket=CLOUD_STORAGE_BUCKET,
+    )
+    G = network.create()
+    print(type(G))
 
 
 if __name__ == "__main__":

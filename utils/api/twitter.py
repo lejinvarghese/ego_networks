@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
+import os
 import time
 from warnings import filterwarnings
 
+from dotenv import load_dotenv
+
+load_dotenv()
 filterwarnings("ignore")
+TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
+TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 
 
 def authenticate(api_bearer_token):

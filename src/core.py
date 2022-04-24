@@ -6,6 +6,10 @@ from abc import ABC, abstractmethod, abstractproperty
 
 
 class EgoNeighborhood(ABC):
+    """
+    Ego neighborhood object for any given layer
+    """
+
     @abstractproperty
     def layer(self):
         pass
@@ -36,12 +40,16 @@ class EgoNeighborhood(ABC):
 
 
 class EgoNetwork(ABC):
+    """
+    Ego network object across all layers
+    """
+
     @abstractproperty
     def n_layers(self):
         pass
 
     @abstractproperty
-    def focal_node(self):
+    def focal_node_id(self):
         pass
 
     @abstractproperty
