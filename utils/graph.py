@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
-from pathlib import Path
 from warnings import filterwarnings
 
 filterwarnings("ignore")
-
-PATH = os.getcwd()
-PROJECT = str(Path(PATH).parents[0])
 
 
 def sample_knowledge_graph():

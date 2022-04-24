@@ -10,27 +10,35 @@ import time
 from datetime import datetime
 from warnings import filterwarnings
 
-import dask.dataframe as dd
 import networkx as nx
-import numpy as np
 import pandas as pd
-import tweepy
 from dotenv import load_dotenv
 
 try:
-    from src.network import EgoNetwork
+    from src.core import EgoNeighborhood
+    from utils.api.twitter import authenticate, get_users, get_users_following
+    from utils.generic import read_data, split_into_batches, write_data
 except ModuleNotFoundError:
-    from ego_networks.src.network import EgoNetwork
+    from ego_networks.src.core import EgoNeighborhood
+    from ego_networks.utils.api.twitter import (
+        authenticate,
+        get_users,
+        get_users_following,
+    )
+    from ego_networks.utils.generic import (
+        read_data,
+        split_into_batches,
+        write_data,
+    )
 
 load_dotenv()
 filterwarnings("ignore")
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
-run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
 
 
-class TwitterEgoNetwork(EgoNetwork):
+class TwitterEgoNeighborhood(EgoNeighborhood):
     def __init__(
         self,
         focal_node: str,
@@ -38,18 +46,24 @@ class TwitterEgoNetwork(EgoNetwork):
         api_bearer_token=None,
         storage_bucket=None,
     ):
+        self._layer = "twitter"
         self._focal_node = focal_node
         self._max_radius = int(max_radius)
-        self._api_bearer_token = api_bearer_token
         self._storage_bucket = storage_bucket
-        self._client = self.__authenticate()
-        self._previous_ties = self.__retrieve_previous_ties()
-        self._previous_alter_features = (
-            self.__retrieve_previous_alter_features()
+        self._client = authenticate(api_bearer_token)
+        self._previous_ties = read_data(self._storage_bucket, data_type="ties")
+        self._previous_node_features = read_data(
+            self._storage_bucket, data_type="node_features"
         )
-        self._focal_node_id = self.retrieve_node_features(
-            user_fields=["id"], user_names=[self._focal_node]
+        self._focal_node_id = get_users(
+            client=self._client,
+            user_fields=["id"],
+            user_names=[self._focal_node],
         )[0].id
+
+    @property
+    def layer(self):
+        return self._layer
 
     @property
     def focal_node(self):
@@ -58,14 +72,6 @@ class TwitterEgoNetwork(EgoNetwork):
     @property
     def max_radius(self):
         return self._max_radius
-
-    @property
-    def api_bearer_token(self):
-        return self._api_bearer_token
-
-    @property
-    def storage_bucket(self):
-        return self._storage_bucket
 
     @property
     def client(self):
@@ -80,8 +86,8 @@ class TwitterEgoNetwork(EgoNetwork):
         return self._previous_ties
 
     @property
-    def previous_alter_features(self):
-        return self._previous_alter_features
+    def previous_node_features(self):
+        return self._previous_node_features
 
     @property
     def focal_node_id(self):
@@ -90,7 +96,7 @@ class TwitterEgoNetwork(EgoNetwork):
     def create_network(self, edges=None, nodes=None, sample=False):
         if not sample:
             edges = self._previous_ties.copy().dropna()
-            nodes = self._previous_alter_features.copy().set_index("id")
+            nodes = self._previous_node_features.copy().set_index("id")
 
         edges.columns = ["source", "target"]
         edges["source"] = edges["source"].astype(int)
@@ -119,213 +125,146 @@ class TwitterEgoNetwork(EgoNetwork):
             f"Updating the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
         )
 
-        _new_ties, _all_alters = self.update_ties()
-        _new_alter_features = self.update_alter_features(_all_alters)
+        new_ties, nodes = self.update_ties()
+        new_node_features = self.update_node_features(nodes=nodes)
 
-        if _new_alter_features.shape[0] > 0:
-            print(f"Writing new alter features: {_new_alter_features.shape}")
-            _new_alter_features.to_csv(
-                f"{self._storage_bucket}/data/node_features_{run_time}.csv",
-                index=False,
+        if new_node_features.shape[0] > 0:
+            write_data(
+                self._storage_bucket,
+                new_node_features,
+                data_type="node_features",
             )
         else:
-            print("No new alter features to update neighborhood")
+            print("No new node features to update neighborhood")
 
-        if _new_ties.shape[0] > 0:
-            print(f"Writing new ties: {_new_ties.shape}")
-            _new_ties.to_csv(
-                f"{self._storage_bucket}/data/users_following_{run_time}.csv",
-                index=False,
+        if new_ties.shape[0] > 0:
+            write_data(
+                self._storage_bucket,
+                new_ties,
+                data_type="ties",
             )
         else:
             print("No new ties to update neighborhood")
 
     def update_ties(self):
 
-        previous_alters_r1 = list(self.previous_ties.user.unique())
-        previous_alters_r2 = list(self.previous_ties.following.unique())
-
-        previous_alters_r2 = list(
-            set(previous_alters_r2) - set(previous_alters_r1)
+        alters = {}
+        alters = {
+            i: {"previous": set(), "current": set(), "new": set()}
+            for i in range(1, self._max_radius + 1)
+        }
+        alters[1]["previous"] = set(self.previous_ties.user.unique())
+        alters[2]["previous"] = (
+            set(self.previous_ties.following.unique()) - alters[1]["previous"]
         )
+
         print(
-            f"Previous alters \n@radius 1: {len(previous_alters_r1)} \n@radius 2: {len(previous_alters_r2)} \nPrevious ties: {self.previous_ties.shape[0]}"
+            f"Previous alters \n@radius 1: {len(alters.get(1).get('previous'))} \n@radius 2: {len(alters.get(2).get('previous'))} \nPrevious ties: {self.previous_ties.shape[0]}"
         )
 
-        current_alters_r1 = self.retrieve_ties(user_id=self._focal_node_id).get(
-            "following"
+        alters[1]["current"] = set(
+            get_users_following(
+                client=self._client, user_id=self._focal_node_id
+            ).get("following")
         )
 
-        print(f"Current alters \n@radius 1: {len(current_alters_r1)}")
+        print(
+            f"Current alters \n@radius 1: {len(alters.get(1).get('current'))}"
+        )
 
-        new_alters_r1 = list(set(current_alters_r1) - set(previous_alters_r1))
+        alters[1]["new"] = alters.get(1).get("current") - alters.get(1).get(
+            "previous"
+        )
 
-        print(f"New alters \n@radius 1: {len(new_alters_r1)}")
+        print(f"New alters \n@radius 1: {len(alters.get(1).get('new'))}")
 
         new_ties = [
             {
                 "user": self._focal_node_id,
-                "following": current_alters_r1,
+                "following": alters.get(1).get("current"),
             }
         ]
-        new_alters_r2 = []
-        for u_id in new_alters_r1:
-            u_data = self.retrieve_ties(user_id=u_id)
+
+        for u_id in alters.get(1).get("new"):
+            u_data = get_users_following(client=self._client, user_id=u_id)
             if len(u_data.get("following")) > 0:
                 new_ties.append(u_data)
-                new_alters_r2.append(u_data.get("following"))
+                alters[2]["new"].update(set(u_data.get("following")))
 
         new_ties = pd.json_normalize(new_ties)
-        new_alters_r2 = set(
-            [item for sub_list in new_alters_r2 for item in sub_list]
-        )
 
-        _all_alters = np.array(
-            list(
-                (
-                    set(new_alters_r1)
-                    | set(new_alters_r2)
-                    | set(previous_alters_r1)
-                    | set(previous_alters_r2)
-                )
-            )
-        )
-        return new_ties, _all_alters[~np.isnan(_all_alters)].astype(int)
+        total_alters = set()
+        for i in range(1, self._max_radius + 1):
+            total_alters.update(alters.get(i).get("previous"))
+            total_alters.update(alters.get(i).get("current"))
 
-    def update_alter_features(self, alters):
+        # remove nan values
+        total_alters = {x for x in total_alters if x == x}
+        return new_ties, total_alters
+
+    def update_tie_features(self):
+        pass
+
+    def update_node_features(self, nodes, sleep_time=0.1):
         try:
-            previous_alters_with_features = list(
-                self.previous_alter_features.id.unique()
+            previous_nodes_with_features = set(
+                self.previous_node_features.id.unique()
             )
 
             print(
-                f"Previous alters with features: {len(previous_alters_with_features)}"
+                f"Previous nodes with features: {len(previous_nodes_with_features)}"
             )
         except AttributeError:
-            previous_alters_with_features = []
+            previous_nodes_with_features = set()
 
-        new_alters = list(set(alters) - set(previous_alters_with_features))
-        new_alters.append(self._focal_node_id)
+        new_nodes = set(nodes - previous_nodes_with_features)
+        new_nodes.add(self._focal_node_id)
 
         print(
-            f"All alters within radius {self._max_radius}: {len(alters)}, \nNew alters: {len(new_alters)}"
+            f"All nodes within radius {self._max_radius}: {len(nodes)}, \nNew nodes: {len(new_nodes)}"
         )
 
         max_api_batch_size = 100
-        if len(new_alters) > max_api_batch_size:
-            new_alter_batches = self.__get_batches(
-                new_alters, batch_size=max_api_batch_size
+        if len(new_nodes) > max_api_batch_size:
+            new_node_batches = split_into_batches(
+                list(new_nodes), batch_size=max_api_batch_size
             )
         else:
-            new_alter_batches = [new_alters]
+            new_node_batches = [list(new_nodes)]
 
-        new_alter_features = []
-        alter_feature_fields = [
+        new_node_features = []
+        feature_fields = [
             "profile_image_url",
             "username",
             "public_metrics",
             "verified",
         ]
-        for batch in new_alter_batches:
-            time.sleep(0.1)
-            new_alter_features.append(
+        for batch in new_node_batches:
+            time.sleep(sleep_time)
+            new_node_features.append(
                 pd.DataFrame(
-                    self.retrieve_node_features(
-                        user_fields=alter_feature_fields,
+                    get_users(
+                        client=self._client,
+                        user_fields=feature_fields,
                         user_ids=batch,
                     )
                 )
             )
 
-        new_alter_features = pd.concat(new_alter_features)
-        new_alter_features["withheld"] = None
-        return new_alter_features
-
-    def retrieve_ties(
-        self, user_id, max_results=1000, total_limit=5000, sleep_timer=0.1
-    ):
-        following = []
-        for neighbor in tweepy.Paginator(
-            self.client.get_users_following, id=user_id, max_results=max_results
-        ).flatten(limit=total_limit):
-            time.sleep(sleep_timer)
-            following.append(neighbor.id)
-        print(f"User: {user_id}, Following: {len(following)}")
-        return {"user": user_id, "following": following}
-
-    def retrieve_tie_features(self):
-        pass
-
-    def retrieve_node_features(
-        self, user_fields, user_names=None, user_ids=None
-    ):
-
-        if user_ids:
-            return self.client.get_users(
-                ids=user_ids,
-                user_fields=user_fields,
-            ).data
-        elif user_names:
-            return self.client.get_users(
-                usernames=user_names,
-                user_fields=user_fields,
-            ).data
-        else:
-            raise ValueError(
-                "Either one of user_names or user_ids should be provided"
-            )
-
-    def __authenticate(self):
-        client = tweepy.Client(self._api_bearer_token, wait_on_rate_limit=True)
-        return client
-
-    def __retrieve_previous_ties(self):
-        try:
-            previous_ties = dd.read_csv(
-                f"{self._storage_bucket}/data/users_following*.csv"
-            ).compute()
-            print(f"Storage bucket authenticated")
-            previous_ties.following = previous_ties.following.apply(
-                ast.literal_eval
-            )
-            return previous_ties.explode("following")
-        except Exception as error:
-            print(f"Storage bucket not found, {error}")
-            return pd.DataFrame()
-
-    def __retrieve_previous_alter_features(self):
-        try:
-            previous_alter_features = dd.read_csv(
-                f"{self._storage_bucket}/data/node_features*.csv",
-                dtype={"withheld": "object"},
-            ).compute()
-            return previous_alter_features.drop(
-                columns="withheld"
-            ).drop_duplicates()
-            print(f"Storage bucket authenticated")
-        except Exception as error:
-            print(f"Storage bucket not found, {error}")
-            return pd.DataFrame()
-
-    def __get_batches(self, src_list: list, batch_size: int):
-        batches = [
-            src_list[x : x + batch_size]
-            for x in range(0, len(src_list), batch_size)
-        ]
-
-        print(f"Total batches: {len(batches)}, batch size: {len(batches[0])} ")
-        return batches
+        new_node_features = pd.concat(new_node_features)
+        new_node_features["withheld"] = None
+        return new_node_features
 
 
 def main():
-    ego_network = TwitterEgoNetwork(
+    twitter_hood = TwitterEgoNeighborhood(
         focal_node=TWITTER_USERNAME,
         max_radius=2,
         api_bearer_token=TWITTER_API_BEARER_TOKEN,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
-    ego_network.update_neighborhood()
-    G = ego_network.create_network()
+    twitter_hood.update_neighborhood()
+    G = twitter_hood.create_network()
 
 
 if __name__ == "__main__":
