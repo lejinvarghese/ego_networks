@@ -11,6 +11,7 @@ from datetime import datetime
 from warnings import filterwarnings
 
 import dask.dataframe as dd
+import networkx as nx
 import numpy as np
 import pandas as pd
 import tweepy
@@ -86,8 +87,28 @@ class TwitterEgoNetwork(EgoNetwork):
     def focal_node_id(self):
         return self._focal_node_id
 
-    def update_network(self):
-        pass
+    def create_network(self, edges=None, nodes=None, sample=False):
+        if not sample:
+            edges = self._previous_ties.copy().dropna()
+            nodes = self._previous_alter_features.copy().set_index("id")
+
+        edges.columns = ["source", "target"]
+        edges["source"] = edges["source"].astype(int)
+        edges["target"] = edges["target"].astype(int)
+        edges["weight"] = 1
+        G = nx.from_pandas_edgelist(
+            edges, create_using=nx.DiGraph(), edge_attr=True
+        )
+        for feature in nodes:
+            nx.set_node_attributes(
+                G,
+                pd.Series(nodes[feature]).to_dict(),
+                feature,
+            )
+
+        print(f"Nodes: {len(G.nodes())}, Edges: {len(G.edges())}")
+        print(f"Nodes with Features: {nodes.shape[0]}")
+        return G
 
     def update_neighborhood(self):
         """
@@ -108,7 +129,7 @@ class TwitterEgoNetwork(EgoNetwork):
                 index=False,
             )
         else:
-            print(f"No new alter features to update neighborhood")
+            print("No new alter features to update neighborhood")
 
         if _new_ties.shape[0] > 0:
             print(f"Writing new ties: {_new_ties.shape}")
@@ -117,7 +138,7 @@ class TwitterEgoNetwork(EgoNetwork):
                 index=False,
             )
         else:
-            print(f"No new ties to update neighborhood")
+            print("No new ties to update neighborhood")
 
     def update_ties(self):
 
@@ -141,17 +162,24 @@ class TwitterEgoNetwork(EgoNetwork):
 
         print(f"New alters \n@radius 1: {len(new_alters_r1)}")
 
-        new_ties = []
+        new_ties = [
+            {
+                "user": self._focal_node_id,
+                "following": current_alters_r1,
+            }
+        ]
+        new_alters_r2 = []
         for u_id in new_alters_r1:
             u_data = self.retrieve_ties(user_id=u_id)
-            new_ties.append(u_data)
+            if len(u_data.get("following")) > 0:
+                new_ties.append(u_data)
+                new_alters_r2.append(u_data.get("following"))
 
         new_ties = pd.json_normalize(new_ties)
+        new_alters_r2 = set(
+            [item for sub_list in new_alters_r2 for item in sub_list]
+        )
 
-        if new_ties.shape[0] > 0:
-            new_alters_r2 = new_ties.following.unique()
-        else:
-            new_alters_r1 = new_alters_r2 = set()
         _all_alters = np.array(
             list(
                 (
@@ -177,6 +205,7 @@ class TwitterEgoNetwork(EgoNetwork):
             previous_alters_with_features = []
 
         new_alters = list(set(alters) - set(previous_alters_with_features))
+        new_alters.append(self._focal_node_id)
 
         print(
             f"All alters within radius {self._max_radius}: {len(alters)}, \nNew alters: {len(new_alters)}"
@@ -259,12 +288,10 @@ class TwitterEgoNetwork(EgoNetwork):
             previous_ties.following = previous_ties.following.apply(
                 ast.literal_eval
             )
-            previous_ties = previous_ties.explode("following")
+            return previous_ties.explode("following")
         except Exception as error:
             print(f"Storage bucket not found, {error}")
-            previous_ties = pd.DataFrame()
-
-        return previous_ties
+            return pd.DataFrame()
 
     def __retrieve_previous_alter_features(self):
         try:
@@ -272,20 +299,21 @@ class TwitterEgoNetwork(EgoNetwork):
                 f"{self._storage_bucket}/data/node_features*.csv",
                 dtype={"withheld": "object"},
             ).compute()
+            return previous_alter_features.drop(
+                columns="withheld"
+            ).drop_duplicates()
             print(f"Storage bucket authenticated")
         except Exception as error:
             print(f"Storage bucket not found, {error}")
-            previous_alter_features = pd.DataFrame()
-
-        return previous_alter_features
+            return pd.DataFrame()
 
     def __get_batches(self, src_list: list, batch_size: int):
-        batches = np.array_split(src_list, len(src_list) // (batch_size - 1))
-        batches = [batch.tolist() for batch in batches]
+        batches = [
+            src_list[x : x + batch_size]
+            for x in range(0, len(src_list), batch_size)
+        ]
 
-        print(
-            f"Total batches: {np.shape(batches)[0]}, batch size:{np.shape(batches[0])[0]}"
-        )
+        print(f"Total batches: {len(batches)}, batch size: {len(batches[0])} ")
         return batches
 
 
@@ -297,6 +325,7 @@ def main():
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
     ego_network.update_neighborhood()
+    G = ego_network.create_network()
 
 
 if __name__ == "__main__":

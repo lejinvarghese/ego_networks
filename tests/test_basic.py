@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
 
-import pandas as pd
 import pytest
-import random
+from networkx import DiGraph
+from pandas import DataFrame
 
 try:
     from src.twitter_network import TwitterEgoNetwork
@@ -18,22 +18,45 @@ TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 TEST_TWITTER_IDS = [44196397, 2622261]
 TEST_TWITTER_USERNAMES = ["elonmusk", "bulicny"]
 CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
-NETWORK_RADIUS = 1
+MAX_RADIUS = 1
 
 
 @pytest.fixture
 def twitter_network():
     return TwitterEgoNetwork(
         focal_node=TEST_TWITTER_USERNAMES[0],
-        max_radius=NETWORK_RADIUS,
+        max_radius=MAX_RADIUS,
         api_bearer_token=TWITTER_API_BEARER_TOKEN,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
 
 
+@pytest.fixture
+def sample_node_features():
+    return DataFrame(
+        {
+            "id": [999, 777],
+            "name": ["a", "b"],
+            "username": ["us", "ut"],
+        }
+    )
+
+
+@pytest.fixture
+def sample_alters():
+    return [999, 9999, 99999, 77777]
+
+
+@pytest.fixture
+def sample_edges():
+    return DataFrame(
+        {"user": [999, 777, 999], "following": [777, 999, 111]},
+    )
+
+
 def test_instantiation(twitter_network):
     assert twitter_network.focal_node == TEST_TWITTER_USERNAMES[0]
-    assert twitter_network.max_radius == NETWORK_RADIUS
+    assert twitter_network.max_radius == MAX_RADIUS
 
 
 @pytest.mark.parametrize(
@@ -66,10 +89,8 @@ def test_retrieve_node_features_absent(twitter_network):
         twitter_network.retrieve_node_features(user_fields=["id"])
 
 
-def test_retrieve_alter_features(twitter_network):
-    actual = twitter_network.update_alter_features(
-        alters=random.sample(range(1, 10000), 3)
-    )
+def test_retrieve_alter_features(twitter_network, sample_alters):
+    actual = twitter_network.update_alter_features(alters=sample_alters)
     alter_return_fields = [
         "id",
         "name",
@@ -80,7 +101,16 @@ def test_retrieve_alter_features(twitter_network):
         "withheld",
     ]
 
-    assert type(actual) == pd.DataFrame
+    assert type(actual) == DataFrame
     assert set(actual.columns.values) == set(alter_return_fields)
     assert actual.shape[0] > 0
     assert actual.shape[1] == len(alter_return_fields)
+
+
+def test_create_network(twitter_network, sample_edges, sample_node_features):
+    actual = twitter_network.create_network(
+        sample_edges, sample_node_features, sample=True
+    )
+    assert type(actual) == DiGraph
+    assert actual.number_of_nodes() > 0
+    assert actual.number_of_edges() > 0
