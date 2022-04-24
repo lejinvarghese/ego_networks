@@ -19,5 +19,5 @@ repos:
       hooks:
           - id: pylint
             args:
-                - --fail-under=1
+                - --fail-under=3
                 - --max-line-length=80
