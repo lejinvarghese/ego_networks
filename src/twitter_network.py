@@ -88,9 +88,10 @@ class TwitterEgoNetwork(EgoNetwork):
         return self._focal_node_id
 
     def create_network(self):
-        edges = self._previous_ties.copy()
+        edges = self._previous_ties.copy().dropna()
         nodes = self._previous_alter_features.copy().set_index("id")
         edges.columns = ["source", "target"]
+
         edges["source"] = edges["source"].astype(int)
         edges["target"] = edges["target"].astype(int)
         edges["weight"] = 1
@@ -127,7 +128,7 @@ class TwitterEgoNetwork(EgoNetwork):
                 index=False,
             )
         else:
-            print(f"No new alter features to update neighborhood")
+            print("No new alter features to update neighborhood")
 
         if _new_ties.shape[0] > 0:
             print(f"Writing new ties: {_new_ties.shape}")
@@ -136,7 +137,7 @@ class TwitterEgoNetwork(EgoNetwork):
                 index=False,
             )
         else:
-            print(f"No new ties to update neighborhood")
+            print("No new ties to update neighborhood")
 
     def update_ties(self):
 
@@ -160,7 +161,13 @@ class TwitterEgoNetwork(EgoNetwork):
 
         print(f"New alters \n@radius 1: {len(new_alters_r1)}")
 
-        new_ties, new_alters_r2 = [], []
+        new_ties = [
+            {
+                "user": self._focal_node_id,
+                "following": current_alters_r1,
+            }
+        ]
+        new_alters_r2 = []
         for u_id in new_alters_r1:
             u_data = self.retrieve_ties(user_id=u_id)
             if len(u_data.get("following")) > 0:
@@ -168,17 +175,6 @@ class TwitterEgoNetwork(EgoNetwork):
                 new_alters_r2.append(u_data.get("following"))
 
         new_ties = pd.json_normalize(new_ties)
-        new_ties = pd.concat(
-            [
-                new_ties,
-                pd.DataFrame(
-                    {
-                        "user": self._focal_node_id,
-                        "following": [current_alters_r1],
-                    }
-                ),
-            ]
-        )
         new_alters_r2 = set(
             [item for sub_list in new_alters_r2 for item in sub_list]
         )
@@ -207,9 +203,8 @@ class TwitterEgoNetwork(EgoNetwork):
         except AttributeError:
             previous_alters_with_features = []
 
-        new_alters = list(set(alters) - set(previous_alters_with_features)) + [
-            self._focal_node_id
-        ]
+        new_alters = list(set(alters) - set(previous_alters_with_features))
+        new_alters.append(self._focal_node_id)
 
         print(
             f"All alters within radius {self._max_radius}: {len(alters)}, \nNew alters: {len(new_alters)}"
@@ -292,12 +287,10 @@ class TwitterEgoNetwork(EgoNetwork):
             previous_ties.following = previous_ties.following.apply(
                 ast.literal_eval
             )
-            previous_ties = previous_ties.explode("following")
+            return previous_ties.explode("following")
         except Exception as error:
             print(f"Storage bucket not found, {error}")
-            previous_ties = pd.DataFrame()
-
-        return previous_ties.dropna().drop_duplicates()
+            return pd.DataFrame()
 
     def __retrieve_previous_alter_features(self):
         try:
@@ -305,22 +298,21 @@ class TwitterEgoNetwork(EgoNetwork):
                 f"{self._storage_bucket}/data/node_features*.csv",
                 dtype={"withheld": "object"},
             ).compute()
+            return previous_alter_features.drop(
+                columns="withheld"
+            ).drop_duplicates()
             print(f"Storage bucket authenticated")
         except Exception as error:
             print(f"Storage bucket not found, {error}")
-            previous_alter_features = pd.DataFrame()
-
-        return previous_alter_features.drop(
-            columns="withheld"
-        ).drop_duplicates()
+            return pd.DataFrame()
 
     def __get_batches(self, src_list: list, batch_size: int):
-        batches = np.array_split(src_list, len(src_list) // (batch_size - 1))
-        batches = [batch.tolist() for batch in batches]
+        batches = [
+            src_list[x : x + batch_size]
+            for x in range(0, len(src_list), batch_size)
+        ]
 
-        print(
-            f"Total batches: {np.shape(batches)[0]}, batch size:{np.shape(batches[0])[0]}"
-        )
+        print(f"Total batches: {len(batches)}, batch size: {len(batches[0])} ")
         return batches
 
 

@@ -18,14 +18,14 @@ TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 TEST_TWITTER_IDS = [44196397, 2622261]
 TEST_TWITTER_USERNAMES = ["elonmusk", "bulicny"]
 CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
-NETWORK_RADIUS = 1
+MAX_RADIUS = 1
 
 
 @pytest.fixture
 def twitter_network():
     return TwitterEgoNetwork(
         focal_node=TEST_TWITTER_USERNAMES[0],
-        max_radius=NETWORK_RADIUS,
+        max_radius=MAX_RADIUS,
         api_bearer_token=TWITTER_API_BEARER_TOKEN,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
@@ -33,7 +33,7 @@ def twitter_network():
 
 def test_instantiation(twitter_network):
     assert twitter_network.focal_node == TEST_TWITTER_USERNAMES[0]
-    assert twitter_network.max_radius == NETWORK_RADIUS
+    assert twitter_network.max_radius == MAX_RADIUS
 
 
 @pytest.mark.parametrize(
