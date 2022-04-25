@@ -11,6 +11,7 @@ except ModuleNotFoundError:
 RADIUS = 1
 sample_test_twitter_user_names = ["elonmusk", "bulicny"]
 
+
 @pytest.fixture
 def twitter_network():
     return HomogenousEgoNetwork(

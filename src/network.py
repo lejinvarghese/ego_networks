@@ -293,25 +293,45 @@ class HomogenousEgoNetwork(EgoNetwork):
         print(f"Nodes: {len(G_e.nodes())}, Edges: {len(G_e.edges())}")
         return G_e
 
+    class Metrics:
+        def __init__(self, G):
+            self.G = G
+            self.n_nodes = self.size = len(self.G.nodes())
+            self.n_edges = self.ties = len(self.G.edges())
+            self.pairs = self.size * (self.size - 1)
+            self.density = round(self.size / self.pairs, 4)
+            self.transitivity = round(nx.transitivity(self.G), 4)
+            self.average_clustering = round(nx.average_clustering(self.G), 4)
+            self.n_strongly_connected_components = round(
+                nx.number_strongly_connected_components(self.G)
+            )
+            self.n_attracting_components = round(
+                nx.number_attracting_components(self.G)
+            )
+            self.global_reaching_centrality = round(
+                nx.global_reaching_centrality(self.G), 4
+            )
+
     def calculate_metrics(self):
-        pass
+        G = self.create()
+        metrics = self.Metrics(G)
+        print(f"Ties per node: {metrics.__dict__}")
 
 
 def main():
-    twitter_hood = TwitterEgoNeighborhood(
-        focal_node=TWITTER_USERNAME,
-        max_radius=2,
-        api_bearer_token=TWITTER_API_BEARER_TOKEN,
-        storage_bucket=CLOUD_STORAGE_BUCKET,
-    )
-    twitter_hood.update_neighborhood()
+    # twitter_hood = TwitterEgoNeighborhood(
+    #     focal_node=TWITTER_USERNAME,
+    #     max_radius=2,
+    #     api_bearer_token=TWITTER_API_BEARER_TOKEN,
+    #     storage_bucket=CLOUD_STORAGE_BUCKET,
+    # )
+    # twitter_hood.update_neighborhood()
     network = HomogenousEgoNetwork(
         focal_node_id=INTEGRATED_FOCAL_NODE_ID,
         radius=1,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
-    G = network.create()
-    print(type(G))
+    network.calculate_metrics()
 
 
 if __name__ == "__main__":
