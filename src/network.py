@@ -244,6 +244,7 @@ class HomogenousEgoNetwork(EgoNetwork):
         self._n_layers = n_layers
         self._radius = radius
         self._storage_bucket = storage_bucket
+        self.G = self.__create_network()
 
     @property
     def n_layers(self):
@@ -257,7 +258,7 @@ class HomogenousEgoNetwork(EgoNetwork):
     def focal_node_id(self):
         return self._focal_node_id
 
-    def create(self, edges=None, nodes=None):
+    def __create_network(self, edges=None, nodes=None):
 
         if self._storage_bucket is not None:
             edges = read_data(self._storage_bucket, data_type="ties")
@@ -293,29 +294,73 @@ class HomogenousEgoNetwork(EgoNetwork):
         print(f"Nodes: {len(G_e.nodes())}, Edges: {len(G_e.edges())}")
         return G_e
 
-    class Metrics:
-        def __init__(self, G):
+    class Measures:
+        def __init__(self, G, nodes=False, edges=False):
             self.G = G
-            self.n_nodes = self.size = len(self.G.nodes())
-            self.n_edges = self.ties = len(self.G.edges())
-            self.pairs = self.size * (self.size - 1)
-            self.density = round(self.size / self.pairs, 4)
-            self.transitivity = round(nx.transitivity(self.G), 4)
-            self.average_clustering = round(nx.average_clustering(self.G), 4)
-            self.n_strongly_connected_components = round(
+            self.summary_measures = self.__create_graph_measures()
+            if nodes:
+                self.node_measures = self.__create_nodes_measures()
+            if edges:
+                self.edge_measures = self.__create_edges_measures()
+
+        def __create_graph_measures(self):
+            measures = {}
+            measures["n_nodes"] = measures["size"] = len(self.G.nodes())
+            measures["n_edges"] = measures["ties"] = len(self.G.edges())
+            measures["pairs"] = measures.get("size") * (
+                measures.get("size") - 1
+            )
+            measures["density"] = round(
+                measures.get("size") / measures.get("pairs"), 2
+            )
+            measures["transitivity"] = round(nx.transitivity(self.G), 2)
+            measures["average_clustering"] = round(
+                nx.average_clustering(self.G), 2
+            )
+            measures["n_strongly_connected_components"] = round(
                 nx.number_strongly_connected_components(self.G)
             )
-            self.n_attracting_components = round(
+            measures["n_attracting_components"] = round(
                 nx.number_attracting_components(self.G)
             )
-            self.global_reaching_centrality = round(
-                nx.global_reaching_centrality(self.G), 4
+            measures["global_reaching_centrality"] = round(
+                nx.global_reaching_centrality(self.G)
+            )
+            return (
+                pd.DataFrame.from_dict(
+                    measures, orient="index", columns=["measure_value"]
+                )
+                .rename_axis(index="measure_name")
+                .sort_index()
             )
 
-    def calculate_metrics(self):
-        G = self.create()
-        metrics = self.Metrics(G)
-        print(f"Ties per node: {metrics.__dict__}")
+        def __create_nodes_measures(self):
+            measures = {}
+            measures["degree_centrality"] = nx.degree_centrality(self.G)
+            measures["eigenvector_centrality"] = nx.eigenvector_centrality(
+                self.G
+            )
+            return (
+                pd.DataFrame.from_dict(measures, orient="index")
+                .rename_axis(index="measure_name")
+                .melt(
+                    ignore_index=False,
+                    var_name="node",
+                    value_name="measure_value",
+                )
+                .round(2)
+                .set_index("node", append=True)
+                .sort_index()
+            )
+
+        def __create_edges_measures(self):
+            measures = {}
+            return pd.DataFrame.from_dict(
+                measures, orient="index", columns=["measure_value"]
+            ).rename_axis(index="measure_name")
+
+    def create_measures(self, nodes=False, edges=False):
+        return self.Measures(self.G, nodes=nodes, edges=edges)
 
 
 def main():
@@ -331,7 +376,9 @@ def main():
         radius=1,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
-    network.calculate_metrics()
+    measures = network.create_measures(nodes=True)
+    print(measures.summary_measures)
+    print(measures.node_measures)
 
 
 if __name__ == "__main__":

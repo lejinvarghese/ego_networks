@@ -57,7 +57,7 @@ class EgoNetwork(ABC):
         pass
 
     @abstractmethod
-    def calculate_metrics(self, network):
+    def create_measures(self, network):
         pass
 
 
