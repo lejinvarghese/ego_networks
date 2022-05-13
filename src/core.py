@@ -75,7 +75,7 @@ class NetworkMeasures(ABC):
         pass
 
     @abstractproperty
-    def summary_measures(self):
+    def edge_measures(self):
         pass
 
 
