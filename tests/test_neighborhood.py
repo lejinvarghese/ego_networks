@@ -5,10 +5,10 @@ import pytest
 from pandas import DataFrame
 
 try:
-    from src.network import TwitterEgoNeighborhood
+    from src.neighborhoods.twitter import TwitterEgoNeighborhood
     from utils.api.twitter import authenticate, get_users, get_users_following
 except ModuleNotFoundError:
-    from ego_networks.src.network import TwitterEgoNeighborhood
+    from ego_networks.src.neighborhoods.twitter import TwitterEgoNeighborhood
     from ego_networks.utils.api.twitter import (
         authenticate,
         get_users,

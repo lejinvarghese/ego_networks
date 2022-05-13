@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Extracts Twitter API v2.0 to extract forward one hop neighbors of followed users
+Core abstract functionalities for the main objects in the multi layered complex network.
 """
 from abc import ABC, abstractmethod, abstractproperty
 
 
 class EgoNeighborhood(ABC):
     """
-    Ego neighborhood object for any given layer
+    Abstract class for ego neighborhood for any given layer
     """
 
     @abstractproperty
@@ -41,7 +41,7 @@ class EgoNeighborhood(ABC):
 
 class EgoNetwork(ABC):
     """
-    Ego network object across all layers
+    Abstract class for ego network spanning across all layers
     """
 
     @abstractproperty
@@ -61,5 +61,27 @@ class EgoNetwork(ABC):
         pass
 
 
-class EgoNetworkRecommender(EgoNetwork):
+class NetworkMeasures(ABC):
+    """
+    Abstract class for ego network measures
+    """
+
+    @abstractproperty
+    def summary_measures(self):
+        pass
+
+    @abstractproperty
+    def node_measures(self):
+        pass
+
+    @abstractproperty
+    def summary_measures(self):
+        pass
+
+
+class EgoNetworkRecommender(ABC):
+    """
+    Abstract class for ego network recommenders
+    """
+
     pass

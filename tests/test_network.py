@@ -13,15 +13,6 @@ sample_test_twitter_user_names = ["elonmusk", "bulicny"]
 
 
 @pytest.fixture
-def twitter_network():
-    return HomogenousEgoNetwork(
-        focal_node_id=999,
-        radius=RADIUS,
-        storage_bucket=None,
-    )
-
-
-@pytest.fixture
 def sample_node_features():
     return DataFrame(
         {
@@ -42,11 +33,19 @@ def sample_edges():
     )
 
 
-def test_create_network(twitter_network, sample_edges, sample_node_features):
-    actual = twitter_network.create(
-        edges=sample_edges,
+@pytest.fixture
+def twitter_network(sample_node_features, sample_edges):
+    return HomogenousEgoNetwork(
+        focal_node_id=999,
+        radius=RADIUS,
         nodes=sample_node_features,
+        edges=sample_edges,
+        storage_bucket=None,
     )
+
+
+def test_create_network(twitter_network):
+    actual = twitter_network.G
     assert type(actual) == DiGraph
     assert actual.number_of_nodes() > 0
     assert actual.number_of_edges() > 0
