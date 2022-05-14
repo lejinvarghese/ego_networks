@@ -19,13 +19,13 @@ CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 
 
 def main():
-    twitter_hood = TwitterEgoNeighborhood(
-        focal_node=TWITTER_USERNAME,
-        max_radius=2,
-        api_bearer_token=TWITTER_API_BEARER_TOKEN,
-        storage_bucket=CLOUD_STORAGE_BUCKET,
-    )
-    twitter_hood.update_neighborhood()
+    # twitter_hood = TwitterEgoNeighborhood(
+    #     focal_node=TWITTER_USERNAME,
+    #     max_radius=2,
+    #     api_bearer_token=TWITTER_API_BEARER_TOKEN,
+    #     storage_bucket=CLOUD_STORAGE_BUCKET,
+    # )
+    # twitter_hood.update_neighborhood()
     network = HomogenousEgoNetwork(
         focal_node_id=INTEGRATED_FOCAL_NODE_ID,
         radius=1,
