@@ -1,5 +1,14 @@
+"""
+Reference:
+1. https://faculty.ucr.edu/~hanneman/nettext/C9_Ego_networks.html
+2. networkx: https://networkx.github.io/documentation/stable/reference/algorithms/centrality.html
+3. brokerage: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5325703/
+"""
+
+
 import networkx as nx
 import pandas as pd
+import time
 
 try:
     from src.core import NetworkMeasures
@@ -8,13 +17,7 @@ except ModuleNotFoundError:
 
 
 class EgoNetworkMeasures(NetworkMeasures):
-    """
-    Documentation:
-    1. https://faculty.ucr.edu/~hanneman/nettext/C9_Ego_networks.html
-    2. networkx: https://networkx.github.io/documentation/stable/reference/algorithms/centrality.html
-    3. brokerage: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5325703/
-
-    """
+    """ """
 
     def __init__(self, G, nodes=False, edges=False):
         self.G = G
@@ -44,7 +47,7 @@ class EgoNetworkMeasures(NetworkMeasures):
         measures["n_nodes"] = measures["size"] = len(self.G.nodes())
         measures["n_edges"] = measures["ties"] = len(self.G.edges())
         measures["pairs"] = measures.get("size") * (measures.get("size") - 1)
-        measures["density"] = measures.get("size") / measures.get("pairs")
+        measures["density"] = nx.density(self.G)
 
         measures["transitivity"] = nx.transitivity(self.G)
         measures["average_clustering"] = nx.average_clustering(self.G)
@@ -73,8 +76,12 @@ class EgoNetworkMeasures(NetworkMeasures):
         measures["betweenness_centrality"] = nx.betweenness_centrality(
             self.G, k=min(len(self.G.nodes()), 500)
         )
-        measures["eigenvector_centrality"] = nx.eigenvector_centrality(self.G)
-        measures["pagerank"] = nx.pagerank(self.G)
+
+        measures["eigenvector_centrality"] = nx.eigenvector_centrality_numpy(
+            self.G
+        )
+        measures["pagerank"] = nx.pagerank_scipy(self.G)
+        measures["hubs"], measures["authorities"] = nx.hits(self.G)
         measures["closeness_centrality"] = nx.closeness_centrality(self.G)
         return (
             pd.DataFrame.from_dict(measures, orient="index")
@@ -85,13 +92,36 @@ class EgoNetworkMeasures(NetworkMeasures):
                 value_name="measure_value",
             )
             .round(4)
-            .set_index("node", append=True)
-            .sort_values(ascending=False, by="measure_value")
-            .sort_index(level=0, ascending=True)
+            .reset_index()
+            .sort_values(
+                by=["measure_name", "measure_value"],
+                ascending=False,
+            )
         )
 
     def __create_edge_measures(self):
         measures = {}
-        return pd.DataFrame.from_dict(
-            measures, orient="index", columns=["measure_value"]
-        ).rename_axis(index="measure_name")
+        # start = time.time()
+        measures[
+            "edge_betweenness_centrality"
+        ] = nx.edge_betweenness_centrality(
+            self.G, k=min(len(self.G.nodes()), 100), seed=42
+        )
+        # end = time.time()
+        # print(f"Function took {end - start} seconds.")
+        for k, v in measures.items():
+            measures[k] = (
+                pd.Series(v)
+                .rename_axis(["source_node", "target_node"])
+                .reset_index(name="measure_value")
+            )
+
+        return (
+            pd.concat(measures, axis=0)
+            .reset_index(level=0)
+            .rename({"level_0": "measure_name"}, axis=1)
+            .sort_values(
+                by=["measure_name", "measure_value"],
+                ascending=False,
+            )
+        )
