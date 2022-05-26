@@ -32,7 +32,9 @@ def test_summary_measures(sample_graph):
 
 
 def test_node_measures(sample_graph):
-    actual = EgoNetworkMeasures(sample_graph, nodes=True).node_measures
+    actual = EgoNetworkMeasures(
+        sample_graph, calculate_nodes=True
+    ).node_measures
 
     assert type(actual) == DataFrame
     assert actual.shape[0] >= n_nodes
@@ -43,5 +45,8 @@ def test_node_measures(sample_graph):
             "betweenness_centrality",
             "eigenvector_centrality",
             "pagerank",
+            "hubs",
+            "authorities",
+            "brokerage",
         ]
     )

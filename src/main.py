@@ -31,10 +31,11 @@ def main():
         radius=1,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
-    measures = network.create_measures(nodes=True, edges=True)
-    # print(measures.summary_measures)
-    print(measures.node_measures.head(10))
-    print(measures.edge_measures.head(10))
+    measures = network.create_measures(
+        calculate_nodes=True, calculate_edges=True
+    )
+    print(measures.summary_measures)
+    print(measures.node_measures)
 
 
 if __name__ == "__main__":

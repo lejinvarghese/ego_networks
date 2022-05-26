@@ -84,5 +84,9 @@ class HomogenousEgoNetwork(EgoNetwork):
         print(f"Nodes: {len(G_e.nodes())}, Edges: {len(G_e.edges())}")
         return G_e
 
-    def create_measures(self, nodes=False, edges=False):
-        return EgoNetworkMeasures(self.G, nodes=nodes, edges=edges)
+    def create_measures(self, calculate_nodes=False, calculate_edges=False):
+        return EgoNetworkMeasures(
+            self.G,
+            calculate_nodes=calculate_nodes,
+            calculate_edges=calculate_edges,
+        )
