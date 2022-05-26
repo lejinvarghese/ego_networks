@@ -122,6 +122,26 @@ def draw_nx_graph(
     plt.show()
 
 
+def brokerage(graph, k=100, seed=42):
+    from networkx import edge_betweenness_centrality
+    from pandas import Series
+
+    e_cen = edge_betweenness_centrality(
+        graph, k=min(len(graph.nodes()), 100), seed=42
+    )
+    e_cen_series = (
+        Series(e_cen)
+        .rename_axis(["source_node", "target_node"])
+        .reset_index(name="measure_value")
+    )
+    measure = (
+        e_cen_series.groupby("source_node").measure_value.mean()
+        # .reset_index()
+        # .rename(columns={"source_node": "node"})
+    )
+    return measure.to_dict()
+
+
 def get_ego_graph(graph, edge_labels=None, node="Tom", radius=1):
     import networkx as nx
 
