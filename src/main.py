@@ -28,7 +28,7 @@ def main():
     # twitter_hood.update_neighborhood()
     network = HomogenousEgoNetwork(
         focal_node_id=INTEGRATED_FOCAL_NODE_ID,
-        radius=1,
+        radius=2,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
     measures = network.create_measures(
