@@ -12,9 +12,9 @@ An effort to study information flow and belief propogation through ego networks.
 
 -   We start with creating the two step neighborhood network for twitter social media, for the out neighbors. However, worth noting that the information flow is inward.
 
-<p align="center">
+<!-- <p align="center">
     <img src="./assets/ego_network.png" alt="ego" width="500"/>
-</p>
+</p> -->
 
 -   This could extend to `heterogenous nodes` of multiple entities such as people, content etc.
 -   This could also extend to a complex [multiplex network](https://cosnet.bifi.es/network-theory/multiplex-networks/) that captures multiple relationship types. Information would flow through multiple layers of the network with differing diffusion patterns.
