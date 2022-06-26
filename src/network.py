@@ -91,14 +91,3 @@ class HomogenousEgoNetwork(EgoNetwork):
             calculate_edges=calculate_edges,
         )
         return measures
-
-    #  if write:
-    # measures.summary_measures.to_csv(
-    #     f"{CLOUD_STORAGE_BUCKET}/data/processed/measures/{MAX_RADIUS}/summary_measures.csv",
-    #     index=False,
-    # )
-
-    # measures.node_measures.to_csv(
-    #     f"{CLOUD_STORAGE_BUCKET}/data/processed/measures/{MAX_RADIUS}/node_measures.csv",
-    #     index=False,
-    # )
