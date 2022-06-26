@@ -11,11 +11,11 @@ import pandas as pd
 try:
     from src.core import EgoNetwork
     from src.measures import EgoNetworkMeasures
-    from utils.generic import read_data
+    from utils.default import read_data
 except ModuleNotFoundError:
     from ego_networks.src.core import EgoNetwork
     from ego_networks.src.measures import EgoNetworkMeasures
-    from ego_networks.utils.generic import read_data
+    from ego_networks.utils.default import read_data
 
 filterwarnings("ignore")
 

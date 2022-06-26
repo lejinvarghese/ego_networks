@@ -7,11 +7,6 @@ sudo systemctl enable neo4j.service
 sudo systemctl status neo4j.service
 
 
-
-
-
-
-
 # docker run -it --rm \
 #   --publish=7474:7474 --publish=7687:7687 \
 #   -v $HOME/bloom.license:/licenses/bloom.license \

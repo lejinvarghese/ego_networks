@@ -5,9 +5,6 @@ Reference:
 3. brokerage: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5325703/
 """
 
-
-import time
-
 import networkx as nx
 import pandas as pd
 
@@ -103,7 +100,4 @@ class EgoNetworkMeasures(NetworkMeasures):
         )
 
     def __create_edge_measures(self):
-        measures = {}
-        return pd.DataFrame.from_dict(
-            measures, orient="index", columns=["measure_value"]
-        ).rename_axis(index="measure_name")
+        pass
