@@ -134,3 +134,4 @@ yarl==1.7.2
 pylint
 pre-commit
 isort
+py2neo

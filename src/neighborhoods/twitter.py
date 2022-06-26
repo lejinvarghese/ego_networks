@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 try:
     from src.core import EgoNeighborhood
     from utils.api.twitter import authenticate, get_users, get_users_following
-    from utils.generic import read_data, split_into_batches, write_data
+    from utils.default import read_data, split_into_batches, write_data
 except ModuleNotFoundError:
     from ego_networks.src.core import EgoNeighborhood
     from ego_networks.utils.api.twitter import (
@@ -21,7 +21,7 @@ except ModuleNotFoundError:
         get_users,
         get_users_following,
     )
-    from ego_networks.utils.generic import (
+    from ego_networks.utils.default import (
         read_data,
         split_into_batches,
         write_data,
