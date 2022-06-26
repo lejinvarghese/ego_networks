@@ -100,7 +100,4 @@ class EgoNetworkMeasures(NetworkMeasures):
         )
 
     def __create_edge_measures(self):
-        measures = {}
-        return pd.DataFrame.from_dict(
-            measures, orient="index", columns=["measure_value"]
-        ).rename_axis(index="measure_name")
+        pass
