@@ -28,6 +28,10 @@ def test_recommender_train(sample_measures):
 
     results = recommender.train()
 
-    expected = (n_samples - 1) / 10
     actual = results.measure_value.iloc[0]
+    expected = (n_samples - 1) / 10
+    assert actual == expected
+
+    expected = 0 / 10
+    actual = results.measure_value.iloc[-1]
     assert actual == expected
