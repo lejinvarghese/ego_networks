@@ -3,6 +3,7 @@ Relevant documentation
 """
 
 import pandas as pd
+from scipy.stats import gmean
 
 try:
     from src.core import NetworkRecommender
@@ -26,23 +27,47 @@ class EgoNetworkRecommender(NetworkRecommender):
         self._storage_bucket = storage_bucket
         self._max_radius = max_radius
 
-        if self._storage_bucket is not None:
+        if network_measures is not None:
+            self.network_measures = network_measures
+        elif (network_measures is None) & (self._storage_bucket is not None):
             self.network_measures = read_data(
                 self._storage_bucket, "node_measures"
             )
         else:
-            self.network_measures = network_measures
+            raise ValueError(
+                "Either network_measures or path of the storage_bucket that contain network_measures must be provided"
+            )
 
     def train(self):
-        return self.network_measures.sort_values(
-            by="measure_value", ascending=False
+
+        scores = self.network_measures.pivot(
+            index="node", columns="measure_name"
+        )
+        scores["measure_value"] = scores["measure_value"].fillna(value=0)
+
+        measures = scores.columns.values
+        for i in measures:
+            scores[i] = scores[i].rank(pct=True, method="dense")
+        scores["rank_combined"] = scores.iloc[:, -len(measures) :].apply(
+            gmean, axis=1
+        )
+        scores = scores.sort_values(by="rank_combined", ascending=False)
+        self.__model = scores
+        return scores
+
+    def test(self, targets: dict, top_k_accuracy: int = 100):
+        predicted = set(self.__model.index.to_list()[:top_k_accuracy])
+        actuals = set(list(targets.keys()))
+        true_positive = predicted.intersection(actuals)
+        print(
+            f"Top k accuracy for k @ {top_k_accuracy}: {round(len(true_positive)/min(top_k_accuracy, len(actuals)), 2)}"
         )
 
-    def test(self):
-        pass
-
-    def get_recommendations(k: int = 10):
+    def get_recommendations(self, targets: dict, labels: dict, k: int = 10):
         """
         Returns a list of recommendations for the focal node.
         """
-        pass
+        predicted = self.__model.index.to_list()
+        actuals = list(targets.keys())
+        recs = [labels.get(i) for i in predicted if i not in actuals]
+        return recs[:k]

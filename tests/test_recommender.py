@@ -23,15 +23,14 @@ def sample_measures():
 
 
 def test_recommender_train(sample_measures):
-    pass
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
 
     results = recommender.train()
 
-    actual = results.measure_value.iloc[0]
-    expected = (n_samples - 1) / 10
+    actual = results.measure_value.iloc[-1, -1]
+    expected = 1 / n_samples
     assert actual == expected
 
-    expected = 0 / 10
-    actual = results.measure_value.iloc[-1]
+    expected = 1.0
+    actual = results.measure_value.iloc[0, -1]
     assert actual == expected

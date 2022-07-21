@@ -29,7 +29,6 @@ class EgoNetworkMeasures(NetworkMeasures):
         G,
         calculate_nodes=False,
         calculate_edges=False,
-        write_destination=True,
     ):
         self.G = G
         self.calculate_nodes = calculate_nodes
@@ -76,7 +75,7 @@ class EgoNetworkMeasures(NetworkMeasures):
                 measures, orient="index", columns=["measure_value"]
             )
             .rename_axis(index="measure_name")
-            .round(4)
+            .round(6)
             .sort_index()
         )
 
@@ -103,7 +102,7 @@ class EgoNetworkMeasures(NetworkMeasures):
                 var_name="node",
                 value_name="measure_value",
             )
-            .round(4)
+            .round(6)
             .reset_index()
             .sort_values(
                 by=["measure_name", "measure_value"],

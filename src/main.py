@@ -30,17 +30,22 @@ def main():
     # )
     # twitter_hood.update_neighborhood()
 
-    # network = HomogenousEgoNetwork(
-    #     focal_node_id=INTEGRATED_FOCAL_NODE_ID,
-    #     radius=MAX_RADIUS,
-    #     storage_bucket=CLOUD_STORAGE_BUCKET,
-    # )
-    # measures = network.create_measures(
-    #     calculate_nodes=True, calculate_edges=True
-    # )
+    network = HomogenousEgoNetwork(
+        focal_node_id=INTEGRATED_FOCAL_NODE_ID,
+        radius=MAX_RADIUS,
+        storage_bucket=CLOUD_STORAGE_BUCKET,
+    )
+    targets = network.get_ego_user_attributes(radius=1, attribute="username")
+    labels = network.get_ego_user_attributes(radius=2, attribute="username")
+    measures = network.create_measures(
+        calculate_nodes=True, calculate_edges=True
+    )
 
-    recommender = EgoNetworkRecommender(storage_bucket=CLOUD_STORAGE_BUCKET)
+    recommender = EgoNetworkRecommender(network_measures=measures.node_measures)
     recommender.train()
+    recommender.test(targets)
+    recommendations = recommender.get_recommendations(targets, labels)
+    print(recommendations)
 
 
 if __name__ == "__main__":
