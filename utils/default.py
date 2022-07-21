@@ -35,6 +35,12 @@ def read_data(file_path, data_type):
             ).compute()
             print(f"Read successful: {data_type}")
             return data.drop(columns="withheld").drop_duplicates()
+        elif data_type == "node_measures":
+            data = dd.read_csv(
+                f"{file_path}/data/processed/measures/2/node_measures.csv",
+            ).compute()
+            print(f"Read successful: {data_type}")
+            return data
         else:
             raise ValueError(f"Invalid data type: {data_type}")
     except Exception as error:

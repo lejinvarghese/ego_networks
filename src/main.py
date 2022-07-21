@@ -6,9 +6,11 @@ from dotenv import load_dotenv
 try:
     from src.neighborhoods.twitter import TwitterEgoNeighborhood
     from src.network import HomogenousEgoNetwork
+    from src.recommender import EgoNetworkRecommender
 except ModuleNotFoundError:
     from ego_networks.src.neighborhoods.twitter import TwitterEgoNeighborhood
     from ego_networks.src.network import HomogenousEgoNetwork
+    from ego_networks.src.recommender import EgoNetworkRecommender
 
 load_dotenv()
 filterwarnings("ignore")
@@ -27,24 +29,23 @@ def main():
     #     storage_bucket=CLOUD_STORAGE_BUCKET,
     # )
     # twitter_hood.update_neighborhood()
+
     network = HomogenousEgoNetwork(
         focal_node_id=INTEGRATED_FOCAL_NODE_ID,
         radius=MAX_RADIUS,
         storage_bucket=CLOUD_STORAGE_BUCKET,
     )
+    targets = network.get_ego_user_attributes(radius=1, attribute="username")
+    labels = network.get_ego_user_attributes(radius=2, attribute="username")
     measures = network.create_measures(
         calculate_nodes=True, calculate_edges=True
     )
 
-    measures.summary_measures.to_csv(
-        f"{CLOUD_STORAGE_BUCKET}/data/processed/measures/{MAX_RADIUS}/summary_measures.csv",
-        index=False,
-    )
-
-    measures.node_measures.to_csv(
-        f"{CLOUD_STORAGE_BUCKET}/data/processed/measures/{MAX_RADIUS}/node_measures.csv",
-        index=False,
-    )
+    recommender = EgoNetworkRecommender(network_measures=measures.node_measures)
+    recommender.train()
+    recommender.test(targets)
+    recommendations = recommender.get_recommendations(targets, labels)
+    print(recommendations)
 
 
 if __name__ == "__main__":
