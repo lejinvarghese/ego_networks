@@ -17,9 +17,19 @@ except ModuleNotFoundError:
 
 
 class EgoNetworkMeasures(NetworkMeasures):
-    """ """
+    """
+    An object that calculates the relevant measures for the ego network. It can be of three major types:
+    1. Summary measures: These are measures that are calculated for the entire network.
+    2. Node measures: These are measures that are calculated for each node in the network.
+    3. Edge measures: These are measures that are calculated for each edge in the network.
+    """
 
-    def __init__(self, G, calculate_nodes=False, calculate_edges=False):
+    def __init__(
+        self,
+        G,
+        calculate_nodes=False,
+        calculate_edges=False,
+    ):
         self.G = G
         self.calculate_nodes = calculate_nodes
         self.calculate_edges = calculate_edges
@@ -60,15 +70,16 @@ class EgoNetworkMeasures(NetworkMeasures):
         measures["global_reaching_centrality"] = nx.global_reaching_centrality(
             self.G
         )
-
-        return (
+        measures_transformed = (
             pd.DataFrame.from_dict(
                 measures, orient="index", columns=["measure_value"]
             )
             .rename_axis(index="measure_name")
-            .round(4)
+            .round(6)
             .sort_index()
         )
+
+        return measures_transformed
 
     def __create_node_measures(self):
         measures = {}
@@ -83,7 +94,7 @@ class EgoNetworkMeasures(NetworkMeasures):
         measures["pagerank"] = nx.pagerank_scipy(self.G)
         measures["hubs"], measures["authorities"] = nx.hits(self.G)
         measures["brokerage"] = brokerage(self.G)
-        return (
+        measures_transformed = (
             pd.DataFrame.from_dict(measures, orient="index")
             .rename_axis(index="measure_name")
             .melt(
@@ -91,13 +102,15 @@ class EgoNetworkMeasures(NetworkMeasures):
                 var_name="node",
                 value_name="measure_value",
             )
-            .round(4)
+            .round(6)
             .reset_index()
             .sort_values(
                 by=["measure_name", "measure_value"],
                 ascending=False,
             )
         )
+
+        return measures_transformed
 
     def __create_edge_measures(self):
         pass

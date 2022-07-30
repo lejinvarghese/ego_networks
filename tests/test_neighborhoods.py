@@ -71,7 +71,7 @@ def sample_edges():
         (sample_test_twitter_user_ids[1], sample_test_twitter_user_names[1]),
     ],
 )
-def test_authentication(twitter_client, user_id, expected):
+def test_twitter_authentication(twitter_client, user_id, expected):
     actual = get_users(
         client=twitter_client, user_ids=[user_id], user_fields=["username"]
     )[0].username
@@ -99,7 +99,7 @@ def test_get_users_absent(twitter_client):
         get_users(client=twitter_client, user_fields=["id"])
 
 
-def test_instantiation(twitter_neighborhood):
+def test_neighborhood_instantiation(twitter_neighborhood):
     assert twitter_neighborhood.focal_node == sample_test_twitter_user_names[0]
     assert twitter_neighborhood.max_radius == MAX_RADIUS
 

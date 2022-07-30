@@ -79,9 +79,19 @@ class NetworkMeasures(ABC):
         pass
 
 
-class EgoNetworkRecommender(ABC):
+class NetworkRecommender(ABC):
     """
-    Abstract class for ego network recommenders
+    Abstract class for network recommenders
     """
 
-    pass
+    @abstractmethod
+    def train():
+        pass
+
+    @abstractmethod
+    def test():
+        pass
+
+    @abstractmethod
+    def get_recommendations(k):
+        pass

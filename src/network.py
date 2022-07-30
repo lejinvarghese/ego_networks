@@ -81,12 +81,22 @@ class HomogenousEgoNetwork(EgoNetwork):
         print(
             f"Ego network of layers: {self._n_layers}, radius: {self._radius} created."
         )
-        print(f"Nodes: {len(G_e.nodes())}, Edges: {len(G_e.edges())}")
+        print(f"Nodes: {G_e.number_of_nodes()}, Edges: {G_e.number_of_edges()}")
         return G_e
 
     def create_measures(self, calculate_nodes=False, calculate_edges=False):
-        return EgoNetworkMeasures(
+        measures = EgoNetworkMeasures(
             self.G,
             calculate_nodes=calculate_nodes,
             calculate_edges=calculate_edges,
         )
+        return measures
+
+    def get_ego_graph_at_radius(self, radius: int = 1):
+        return nx.ego_graph(self.G, int(self._focal_node_id), radius=radius)
+
+    def get_ego_user_attributes(
+        self, radius: int = 1, attribute: str = "username"
+    ):
+        g_1 = self.get_ego_graph_at_radius(radius)
+        return nx.get_node_attributes(g_1, attribute)

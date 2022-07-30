@@ -9,7 +9,6 @@ except ModuleNotFoundError:
     from ego_networks.src.network import HomogenousEgoNetwork
 
 RADIUS = 1
-sample_test_twitter_user_names = ["elonmusk", "bulicny"]
 
 
 @pytest.fixture
@@ -49,3 +48,15 @@ def test_create_network(twitter_network):
     assert type(actual) == DiGraph
     assert actual.number_of_nodes() > 0
     assert actual.number_of_edges() > 0
+
+
+def test_get_ego_graph_at_radius(twitter_network):
+    actual = twitter_network.get_ego_graph_at_radius(radius=RADIUS)
+    assert type(actual) == DiGraph
+    assert actual.number_of_nodes() > 0
+    assert actual.number_of_edges() > 0
+
+
+def test_get_ego_user_attributes(twitter_network, sample_node_features):
+    actual = twitter_network.get_ego_user_attributes(radius=RADIUS)
+    assert type(actual) == dict
