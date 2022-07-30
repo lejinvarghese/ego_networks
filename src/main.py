@@ -25,7 +25,7 @@ CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 MAX_RADIUS = 2
 
 
-def main():
+def main(k: int = 10):
     # twitter_hood = TwitterEgoNeighborhood(
     #     focal_node=TWITTER_USERNAME,
     #     max_radius=2,
@@ -54,8 +54,9 @@ def main():
         recommender = EgoNetworkRecommender(storage_bucket=CLOUD_STORAGE_BUCKET)
     recommender.train()
     recommender.test(targets)
-    recommendations = recommender.get_recommendations(targets, labels, k=25)
+    recommendations = recommender.get_recommendations(targets, labels, k=k)
     logger.info(recommendations)
+    return recommendations
 
 
 if __name__ == "__main__":
