@@ -7,13 +7,17 @@ try:
     from src.neighborhoods.twitter import TwitterEgoNeighborhood
     from src.network import HomogenousEgoNetwork
     from src.recommender import EgoNetworkRecommender
+    from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.neighborhoods.twitter import TwitterEgoNeighborhood
     from ego_networks.src.network import HomogenousEgoNetwork
     from ego_networks.src.recommender import EgoNetworkRecommender
+    from ego_networks.utils.custom_logger import CustomLogger
 
 load_dotenv()
 filterwarnings("ignore")
+logger = CustomLogger(__name__)
+
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 INTEGRATED_FOCAL_NODE_ID = os.getenv("INTEGRATED_FOCAL_NODE_ID")
@@ -51,7 +55,7 @@ def main():
     recommender.train()
     recommender.test(targets)
     recommendations = recommender.get_recommendations(targets, labels, k=25)
-    print(recommendations)
+    logger.info(recommendations)
 
 
 if __name__ == "__main__":

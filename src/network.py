@@ -12,12 +12,15 @@ try:
     from src.core import EgoNetwork
     from src.measures import EgoNetworkMeasures
     from utils.default import read_data
+    from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import EgoNetwork
     from ego_networks.src.measures import EgoNetworkMeasures
     from ego_networks.utils.default import read_data
+    from ego_networks.utils.custom_logger import CustomLogger
 
 filterwarnings("ignore")
+logger = CustomLogger(__name__)
 
 
 class HomogenousEgoNetwork(EgoNetwork):
@@ -78,10 +81,12 @@ class HomogenousEgoNetwork(EgoNetwork):
         G_e = nx.ego_graph(
             G, int(self._focal_node_id), radius=self._radius, undirected=False
         )
-        print(
+        logger.info(
             f"Ego network of layers: {self._n_layers}, radius: {self._radius} created."
         )
-        print(f"Nodes: {G_e.number_of_nodes()}, Edges: {G_e.number_of_edges()}")
+        logger.info(
+            f"Nodes: {G_e.number_of_nodes()}, Edges: {G_e.number_of_edges()}"
+        )
         return G_e
 
     def create_measures(self, calculate_nodes=False, calculate_edges=False):

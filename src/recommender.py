@@ -8,9 +8,13 @@ from scipy.stats import gmean
 try:
     from src.core import NetworkRecommender
     from utils.default import read_data
+    from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import NetworkRecommender
     from ego_networks.utils.default import read_data
+    from ego_networks.utils.custom_logger import CustomLogger
+
+logger = CustomLogger(__name__)
 
 
 class EgoNetworkRecommender(NetworkRecommender):
@@ -61,8 +65,8 @@ class EgoNetworkRecommender(NetworkRecommender):
         true_positive = predicted.intersection(actuals)
         precision_k = round(len(true_positive) / len(predicted), 2)
         recall_k = round(len(true_positive) / min(k, len(actuals)), 2)
-        print(f"Precision @ k: {k}: {precision_k}")
-        print(f"Recall @ k: {k}: {recall_k}")
+        logger.info(f"Precision @ k: {k}: {precision_k}")
+        logger.info(f"Recall @ k: {k}: {recall_k}")
         return precision_k, recall_k
 
     def get_recommendations(self, targets: dict, labels: dict, k: int = 10):

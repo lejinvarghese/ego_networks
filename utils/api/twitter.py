@@ -5,8 +5,15 @@ from warnings import filterwarnings
 
 from dotenv import load_dotenv
 
+try:
+    from utils.custom_logger import CustomLogger
+except ModuleNotFoundError:
+    from ego_networks.utils.custom_logger import CustomLogger
+
 load_dotenv()
 filterwarnings("ignore")
+logger = CustomLogger(__name__)
+
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 
@@ -29,7 +36,7 @@ def get_users_following(
     ).flatten(limit=total_limit):
         time.sleep(sleep_time)
         following.append(neighbor.id)
-    print(f"User: {user_id}, Following: {len(following)}")
+    logger.info(f"User: {user_id}, Following: {len(following)}")
     return {"user": user_id, "following": following}
 
 
