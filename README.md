@@ -33,3 +33,31 @@ An effort to study information flow and belief propogation through ego networks.
 
 
 -   Secondary goal (and perhaps more immediate) is to fully take control of personalized recommendations of entities from the second step network.
+
+## Twitter Follow Recommendations
+
+- BarackObama
+- BillGates
+- balajis
+- NateSilver538
+- AOC
+- paulg
+- nytimes
+- JoeBiden
+- benshapiro
+- ezraklein
+- peterboghossian
+- TheEconomist
+- WSJ
+- TheBabylonBee
+- rickygervais
+- naval
+- tylercowen
+- DavidSacks
+- chamath
+- kittypurrzog
+- tristanharris
+- AbigailShrier
+- kmele
+- michaelshermer
+- cvaldary

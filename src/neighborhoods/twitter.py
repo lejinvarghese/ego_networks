@@ -14,6 +14,7 @@ try:
     from src.core import EgoNeighborhood
     from utils.api.twitter import authenticate, get_users, get_users_following
     from utils.default import read_data, split_into_batches, write_data
+    from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import EgoNeighborhood
     from ego_networks.utils.api.twitter import (
@@ -26,9 +27,11 @@ except ModuleNotFoundError:
         split_into_batches,
         write_data,
     )
+    from ego_networks.utils.custom_logger import CustomLogger
 
 load_dotenv()
 filterwarnings("ignore")
+logger = CustomLogger(__name__)
 
 
 class TwitterEgoNeighborhood(EgoNeighborhood):
@@ -91,7 +94,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         Updates the neighborhood of the focal node
         """
 
-        print(
+        logger.info(
             f"Updating the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
         )
 
@@ -105,7 +108,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
                 data_type="node_features",
             )
         else:
-            print("No new node features to update neighborhood")
+            logger.info("No new node features to update neighborhood")
 
         if new_ties.shape[0] > 0:
             write_data(
@@ -114,7 +117,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
                 data_type="ties",
             )
         else:
-            print("No new ties to update neighborhood")
+            logger.info("No new ties to update neighborhood")
 
     def update_ties(self):
 
@@ -128,7 +131,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             set(self.previous_ties.following.unique()) - alters[1]["previous"]
         )
 
-        print(
+        logger.info(
             f"Previous alters \n@radius 1: {len(alters.get(1).get('previous'))} \n@radius 2: {len(alters.get(2).get('previous'))} \nPrevious ties: {self.previous_ties.shape[0]}"
         )
 
@@ -138,7 +141,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             ).get("following")
         )
 
-        print(
+        logger.info(
             f"Current alters \n@radius 1: {len(alters.get(1).get('current'))}"
         )
 
@@ -146,7 +149,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             "previous"
         )
 
-        print(f"New alters \n@radius 1: {len(alters.get(1).get('new'))}")
+        logger.info(f"New alters \n@radius 1: {len(alters.get(1).get('new'))}")
 
         new_ties = [
             {
@@ -181,7 +184,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
                 self.previous_node_features.id.unique()
             )
 
-            print(
+            logger.info(
                 f"Previous nodes with features: {len(previous_nodes_with_features)}"
             )
         except AttributeError:
@@ -190,7 +193,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         new_nodes = set(nodes - previous_nodes_with_features)
         new_nodes.add(self._focal_node_id)
 
-        print(
+        logger.info(
             f"All nodes within radius {self._max_radius}: {len(nodes)}, \nNew nodes: {len(new_nodes)}"
         )
 
