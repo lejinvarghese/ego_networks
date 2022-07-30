@@ -22,6 +22,16 @@ def sample_measures():
     )
 
 
+@pytest.fixture
+def sample_targets():
+    return {str(i): "name" + "_" + str(i) for i in range(n_samples // 2)}
+
+
+@pytest.fixture
+def sample_labels():
+    return {str(i): "name" + "_" + str(i) for i in range(n_samples)}
+
+
 def test_recommender_train(sample_measures):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
 
@@ -34,3 +44,24 @@ def test_recommender_train(sample_measures):
     expected = 1.0
     actual = results.measure_value.iloc[0, -1]
     assert actual == expected
+
+
+def test_recommender_test(sample_measures, sample_targets):
+    recommender = EgoNetworkRecommender(network_measures=sample_measures)
+    recommender.train()
+    precision, recall = recommender.test(sample_targets)
+    assert precision == 0.5
+    assert recall == 1.0
+
+
+def test_recommender_recommendations(
+    sample_measures, sample_targets, sample_labels
+):
+    recommender = EgoNetworkRecommender(network_measures=sample_measures)
+    recommender.train()
+    recommendations = recommender.get_recommendations(
+        sample_targets, sample_labels, k = 3
+    )
+    assert recommendations[0] == "name_99"
+    assert recommendations[1] == "name_98"
+    assert recommendations[2] == "name_97"

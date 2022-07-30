@@ -37,14 +37,20 @@ def main():
     )
     targets = network.get_ego_user_attributes(radius=1, attribute="username")
     labels = network.get_ego_user_attributes(radius=2, attribute="username")
-    measures = network.create_measures(
-        calculate_nodes=True, calculate_edges=True
-    )
+    measures = None
+    # measures = network.create_measures(
+    #     calculate_nodes=True, calculate_edges=True
+    # )
 
-    recommender = EgoNetworkRecommender(network_measures=measures.node_measures)
+    if measures:
+        recommender = EgoNetworkRecommender(
+            network_measures=measures.node_measures
+        )
+    else:
+        recommender = EgoNetworkRecommender(storage_bucket=CLOUD_STORAGE_BUCKET)
     recommender.train()
     recommender.test(targets)
-    recommendations = recommender.get_recommendations(targets, labels)
+    recommendations = recommender.get_recommendations(targets, labels, k=25)
     print(recommendations)
 
 

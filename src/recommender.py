@@ -55,13 +55,15 @@ class EgoNetworkRecommender(NetworkRecommender):
         self.__model = scores
         return scores
 
-    def test(self, targets: dict, top_k_accuracy: int = 100):
-        predicted = set(self.__model.index.to_list()[:top_k_accuracy])
+    def test(self, targets: dict, k: int = 100):
+        predicted = set(self.__model.index.to_list()[:k])
         actuals = set(list(targets.keys()))
         true_positive = predicted.intersection(actuals)
-        print(
-            f"Top k accuracy for k @ {top_k_accuracy}: {round(len(true_positive)/min(top_k_accuracy, len(actuals)), 2)}"
-        )
+        precision_k = round(len(true_positive) / len(predicted), 2)
+        recall_k = round(len(true_positive) / min(k, len(actuals)), 2)
+        print(f"Precision @ k: {k}: {precision_k}")
+        print(f"Recall @ k: {k}: {recall_k}")
+        return precision_k, recall_k
 
     def get_recommendations(self, targets: dict, labels: dict, k: int = 10):
         """
