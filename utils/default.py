@@ -12,7 +12,7 @@ try:
 except ModuleNotFoundError:
     from ego_networks.utils.custom_logger import CustomLogger
 
-    
+
 filterwarnings("ignore")
 logger = CustomLogger(__name__)
 run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")

@@ -34,30 +34,26 @@ An effort to study information flow and belief propogation through ego networks.
 
 -   Secondary goal (and perhaps more immediate) is to fully take control of personalized recommendations of entities from the second step network.
 
+## Run
+
+### Code
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 -m src.main
+```
+
+### Application
+
+```bash
+streamlit run app.py
+```
+
+
 ## Twitter Follow Recommendations
 
-- BarackObama
-- BillGates
-- balajis
-- NateSilver538
-- AOC
-- paulg
-- nytimes
-- JoeBiden
-- benshapiro
-- ezraklein
-- peterboghossian
-- TheEconomist
-- WSJ
-- TheBabylonBee
-- rickygervais
-- naval
-- tylercowen
-- DavidSacks
-- chamath
-- kittypurrzog
-- tristanharris
-- AbigailShrier
-- kmele
-- michaelshermer
-- cvaldary
+<p align="center">
+    <img src="./assets/recs.png" alt="sample" width="500"/>
+</p>

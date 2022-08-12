@@ -60,7 +60,7 @@ def test_recommender_recommendations(
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
     recommender.train()
     recommendations = recommender.get_recommendations(
-        sample_targets, sample_labels, k = 3
+        sample_targets, sample_labels, k=3
     )
     assert recommendations[0] == "name_99"
     assert recommendations[1] == "name_98"
