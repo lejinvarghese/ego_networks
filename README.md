@@ -63,3 +63,8 @@ streamlit run app.py
 <p align="center">
     <img src="./assets/recs.png" alt="sample" width="500"/>
 </p>
+
+## Inspiration
+
+- [Gobo](https://www.media.mit.edu/projects/gobo/overview/) by Ethan Zuckerman et al., MIT Media Lab
+  - [GitHub: inactive](https://github.com/mitmedialab/gobo)
