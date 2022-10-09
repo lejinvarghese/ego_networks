@@ -3,6 +3,7 @@ Relevant documentation
 """
 
 import pandas as pd
+import numpy as np
 from scipy.stats import gmean
 
 try:
@@ -42,7 +43,7 @@ class EgoNetworkRecommender(NetworkRecommender):
                 "Either network_measures or path of the storage_bucket that contain network_measures must be provided"
             )
 
-    def train(self):
+    def train(self, weights: dict = None):
 
         scores = self.network_measures.pivot(
             index="node", columns="measure_name"
@@ -52,8 +53,19 @@ class EgoNetworkRecommender(NetworkRecommender):
         measures = scores.columns.values
         for i in measures:
             scores[i] = scores[i].rank(pct=True, method="dense")
+
+        measure_weights = np.ones(scores.shape[1])
+        weights = {"brokerage": 5, "pagerank": 3}
+        for k, v in weights.items():
+            k_t = ("measure_value", k)
+            idx = np.argwhere(measures == k_t).flatten()
+            measure_weights[idx] = v
+            print(k_t, k, v, idx)
+        
+        measure_weights[-1] = 5
+        print(measures, measure_weights)
         scores["rank_combined"] = scores.iloc[:, -len(measures) :].apply(
-            gmean, axis=1
+            gmean, weights=measure_weights, axis=1
         )
         scores = scores.sort_values(by="rank_combined", ascending=False)
         self.__model = scores

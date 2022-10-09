@@ -25,14 +25,19 @@ CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 MAX_RADIUS = 2
 
 
-def main(k: int = 10):
-    # twitter_hood = TwitterEgoNeighborhood(
-    #     focal_node=TWITTER_USERNAME,
-    #     max_radius=2,
-    #     api_bearer_token=TWITTER_API_BEARER_TOKEN,
-    #     storage_bucket=CLOUD_STORAGE_BUCKET,
-    # )
-    # twitter_hood.update_neighborhood()
+def main(
+    k: int = 10,
+    update_neighborhood: bool = False,
+    update_measures: bool = False,
+):
+    if update_neighborhood:
+        twitter_hood = TwitterEgoNeighborhood(
+            focal_node=TWITTER_USERNAME,
+            max_radius=2,
+            api_bearer_token=TWITTER_API_BEARER_TOKEN,
+            storage_bucket=CLOUD_STORAGE_BUCKET,
+        )
+        twitter_hood.update_neighborhood()
 
     network = HomogenousEgoNetwork(
         focal_node_id=INTEGRATED_FOCAL_NODE_ID,
@@ -41,17 +46,17 @@ def main(k: int = 10):
     )
     targets = network.get_ego_user_attributes(radius=1, attribute="username")
     labels = network.get_ego_user_attributes(radius=2, attribute="username")
-    measures = None
-    # measures = network.create_measures(
-    #     calculate_nodes=True, calculate_edges=True
-    # )
 
-    if measures:
+    if update_measures:
+        measures = network.create_measures(
+            calculate_nodes=True, calculate_edges=True
+        )
         recommender = EgoNetworkRecommender(
             network_measures=measures.node_measures
         )
     else:
         recommender = EgoNetworkRecommender(storage_bucket=CLOUD_STORAGE_BUCKET)
+
     recommender.train()
     recommender.test(targets)
     recommendations = recommender.get_recommendations(targets, labels, k=k)

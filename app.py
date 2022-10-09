@@ -38,11 +38,22 @@ def main():
             step=5,
         )
 
+        update_nb_button = st.selectbox(
+            label="Update Neighborhood", options=[False, True]
+        )
+        update_ms_button = st.selectbox(
+            label="Update Measures",
+            options=[False, True],
+        )
         run_button = st.button("Run")
 
     if run_button:
         with st.spinner("Wait for it..."):
-            recommendations = engine(k=k)
+            recommendations = engine(
+                k=k,
+                update_neighborhood=update_nb_button,
+                update_measures=update_ms_button,
+            )
 
         st.title("**Recommendations**")
         for idx, rec in enumerate(recommendations):

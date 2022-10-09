@@ -36,21 +36,27 @@ An effort to study information flow and belief propogation through ego networks.
 
 ## Run
 
-### Code
+### Setup
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
+
+### Source Code
+
+```bash
+source .venv/bin/activate
 python3 -m src.main
 ```
 
-### Application
+### Streamlit Application
 
 ```bash
+source .venv/bin/activate
 streamlit run app.py
 ```
-
 
 ## Twitter Follow Recommendations
 
