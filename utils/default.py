@@ -6,6 +6,7 @@ from warnings import filterwarnings
 import dask.dataframe as dd
 import pandas as pd
 
+from dotenv import load_dotenv
 
 try:
     from utils.custom_logger import CustomLogger
@@ -15,6 +16,7 @@ except ModuleNotFoundError:
 
 filterwarnings("ignore")
 logger = CustomLogger(__name__)
+load_dotenv()
 run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
 
 
@@ -39,7 +41,7 @@ def read_data(file_path, data_type):
         elif data_type == "node_features":
             data = dd.read_csv(
                 f"{file_path}/data/{data_type}*.csv",
-                dtype={"withheld": "object"},
+                # dtype={"withheld": "object"},
             ).compute()
             logger.info(f"Read successful: {data_type}")
             return data.drop(columns="withheld").drop_duplicates()

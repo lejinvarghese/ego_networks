@@ -113,7 +113,7 @@ def test_get_node_features(twitter_neighborhood, sample_nodes):
         "public_metrics",
         "username",
         "verified",
-        "withheld",
+        # "withheld",
     ]
 
     assert type(actual) == DataFrame

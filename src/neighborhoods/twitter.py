@@ -225,5 +225,5 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             )
 
         new_node_features = pd.concat(new_node_features)
-        new_node_features["withheld"] = None
+        # new_node_features["withheld"] = None
         return new_node_features
