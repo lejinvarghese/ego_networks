@@ -11,12 +11,12 @@ import pandas as pd
 try:
     from src.core import EgoNetwork
     from src.measures import EgoNetworkMeasures
-    from utils.default import read_data
+    from utils.io import DataReader
     from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import EgoNetwork
     from ego_networks.src.measures import EgoNetworkMeasures
-    from ego_networks.utils.default import read_data
+    from ego_networks.utils.io import DataReader
     from ego_networks.utils.custom_logger import CustomLogger
 
 filterwarnings("ignore")
@@ -31,12 +31,12 @@ class HomogenousEgoNetwork(EgoNetwork):
         radius: int = 2,
         nodes=None,
         edges=None,
-        storage_bucket: str = None,
+        use_cache: bool = True,
     ):
         self._focal_node_id = focal_node_id
         self._n_layers = n_layers
         self._radius = radius
-        self._storage_bucket = storage_bucket
+        self._use_cache = use_cache
         self.G = self.__create_network(nodes, edges)
 
     @property
@@ -53,11 +53,9 @@ class HomogenousEgoNetwork(EgoNetwork):
 
     def __create_network(self, nodes=None, edges=None):
 
-        if self._storage_bucket is not None:
-            edges = read_data(self._storage_bucket, data_type="ties")
-            nodes = read_data(
-                self._storage_bucket, data_type="node_features"
-            ).set_index("id")
+        if self._use_cache:
+            edges = DataReader(data_type="ties").run()
+            nodes = DataReader(data_type="node_features").run()
 
         if (edges is None) | (nodes is None):
             raise ValueError(

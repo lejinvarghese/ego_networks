@@ -20,7 +20,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
-CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 MAX_RADIUS = 1
 sample_test_twitter_user_ids = [44196397, 2622261]
 sample_test_twitter_user_names = ["elonmusk", "bulicny"]
@@ -37,7 +36,6 @@ def twitter_neighborhood():
         focal_node=sample_test_twitter_user_names[0],
         max_radius=MAX_RADIUS,
         api_bearer_token=TWITTER_API_BEARER_TOKEN,
-        storage_bucket=CLOUD_STORAGE_BUCKET,
     )
 
 
@@ -113,7 +111,6 @@ def test_get_node_features(twitter_neighborhood, sample_nodes):
         "public_metrics",
         "username",
         "verified",
-        # "withheld",
     ]
 
     assert type(actual) == DataFrame

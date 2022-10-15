@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 try:
     from src.core import EgoNeighborhood
     from utils.api.twitter import authenticate, get_users, get_users_following
-    from utils.default import read_data, split_into_batches, write_data
+    from utils.default import split_into_batches
+    from utils.io import DataReader, DataWriter
     from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import EgoNeighborhood
@@ -22,11 +23,8 @@ except ModuleNotFoundError:
         get_users,
         get_users_following,
     )
-    from ego_networks.utils.default import (
-        read_data,
-        split_into_batches,
-        write_data,
-    )
+    from ego_networks.utils.default import split_into_batches
+    from ego_networks.utils.io import DataReader, DataWriter
     from ego_networks.utils.custom_logger import CustomLogger
 
 load_dotenv()
@@ -40,17 +38,15 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         focal_node: str,
         max_radius: int,
         api_bearer_token: str = None,
-        storage_bucket: str = None,
     ):
         self._layer = "twitter"
         self._focal_node = focal_node
         self._max_radius = int(max_radius)
-        self._storage_bucket = storage_bucket
         self._client = authenticate(api_bearer_token)
-        self._previous_ties = read_data(self._storage_bucket, data_type="ties")
-        self._previous_node_features = read_data(
-            self._storage_bucket, data_type="node_features"
-        )
+        self._previous_ties = DataReader(data_type="ties").run()
+        self._previous_node_features = DataReader(
+            data_type="node_features"
+        ).run()
         self._focal_node_id = get_users(
             client=self._client,
             user_fields=["id"],
@@ -102,20 +98,16 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         new_node_features = self.update_node_features(nodes=nodes)
 
         if new_node_features.shape[0] > 0:
-            write_data(
-                self._storage_bucket,
-                new_node_features,
-                data_type="node_features",
+            writer = DataWriter(
+                data=new_node_features, data_type="node_features"
             )
+            writer.run(append=True)
         else:
             logger.info("No new node features to update neighborhood")
 
         if new_ties.shape[0] > 0:
-            write_data(
-                self._storage_bucket,
-                new_ties,
-                data_type="ties",
-            )
+            writer = DataWriter(data=new_ties, data_type="ties")
+            writer.run(append=True)
         else:
             logger.info("No new ties to update neighborhood")
 
@@ -208,8 +200,8 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         new_node_features = []
         feature_fields = [
             "profile_image_url",
-            "username",
             "public_metrics",
+            "username",
             "verified",
         ]
         for batch in new_node_batches:

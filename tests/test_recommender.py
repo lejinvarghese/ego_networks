@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-from networkx import erdos_renyi_graph
 from pandas import DataFrame
 
 try:
@@ -9,7 +8,6 @@ except ModuleNotFoundError:
     from ego_networks.src.recommender import EgoNetworkRecommender
 
 n_samples = 100
-
 
 @pytest.fixture
 def sample_measures():
