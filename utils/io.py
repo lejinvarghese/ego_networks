@@ -23,7 +23,7 @@ class DataConfig:
     root_dir = os.getenv("CLOUD_STORAGE_BUCKET")
     file_paths = {
         "ties": f"{root_dir}/ties",
-        "node_features": f"{root_dir}/node_features",
+        "node_features": f"{root_dir}/features/node",
         "node_measures": f"{root_dir}/measures/node/2",
     }
 
