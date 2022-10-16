@@ -8,11 +8,11 @@ from scipy.stats import gmean
 
 try:
     from src.core import NetworkRecommender
-    from utils.default import read_data
+    from utils.io import DataReader
     from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import NetworkRecommender
-    from ego_networks.utils.default import read_data
+    from ego_networks.utils.io import DataReader
     from ego_networks.utils.custom_logger import CustomLogger
 
 logger = CustomLogger(__name__)
@@ -25,22 +25,21 @@ class EgoNetworkRecommender(NetworkRecommender):
 
     def __init__(
         self,
-        storage_bucket: str = None,
+        network_measures: pd.DataFrame = pd.DataFrame(),
         max_radius: int = 2,
-        network_measures: pd.DataFrame = None,
+        use_cache: bool = False,
     ):
-        self._storage_bucket = storage_bucket
         self._max_radius = max_radius
+        self._use_cache = use_cache
 
-        if network_measures is not None:
+        if self._use_cache:
+            self.network_measures = DataReader(data_type="node_measures").run()
+        elif not (self._use_cache):
             self.network_measures = network_measures
-        elif (network_measures is None) & (self._storage_bucket is not None):
-            self.network_measures = read_data(
-                self._storage_bucket, "node_measures"
-            )
-        else:
+
+        if self.network_measures.empty:
             raise ValueError(
-                "Either network_measures or path of the storage_bucket that contain network_measures must be provided"
+                "Either calculated or cached network_measures should be provided."
             )
 
     def train(self, weights: dict = None):
@@ -55,15 +54,13 @@ class EgoNetworkRecommender(NetworkRecommender):
             scores[i] = scores[i].rank(pct=True, method="dense")
 
         measure_weights = np.ones(scores.shape[1])
-        weights = {"brokerage": 5, "pagerank": 3}
+        weights = {"brokerage": 5, "pagerank": 2}
         for k, v in weights.items():
             k_t = ("measure_value", k)
             idx = np.argwhere(measures == k_t).flatten()
             measure_weights[idx] = v
-            print(k_t, k, v, idx)
-        
+
         measure_weights[-1] = 5
-        print(measures, measure_weights)
         scores["rank_combined"] = scores.iloc[:, -len(measures) :].apply(
             gmean, weights=measure_weights, axis=1
         )
@@ -76,6 +73,7 @@ class EgoNetworkRecommender(NetworkRecommender):
         actuals = set(list(targets.keys()))
         true_positive = predicted.intersection(actuals)
         precision_k = round(len(true_positive) / len(predicted), 2)
+        print(len(actuals), k)
         recall_k = round(len(true_positive) / min(k, len(actuals)), 2)
         logger.info(f"Precision @ k: {k}: {precision_k}")
         logger.info(f"Recall @ k: {k}: {recall_k}")

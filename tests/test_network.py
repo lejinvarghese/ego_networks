@@ -39,7 +39,7 @@ def twitter_network(sample_node_features, sample_edges):
         radius=RADIUS,
         nodes=sample_node_features,
         edges=sample_edges,
-        storage_bucket=None,
+        use_cache=False,
     )
 
 

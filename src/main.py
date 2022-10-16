@@ -35,14 +35,12 @@ def main(
             focal_node=TWITTER_USERNAME,
             max_radius=2,
             api_bearer_token=TWITTER_API_BEARER_TOKEN,
-            storage_bucket=CLOUD_STORAGE_BUCKET,
         )
         twitter_hood.update_neighborhood()
 
     network = HomogenousEgoNetwork(
         focal_node_id=INTEGRATED_FOCAL_NODE_ID,
         radius=MAX_RADIUS,
-        storage_bucket=CLOUD_STORAGE_BUCKET,
     )
     targets = network.get_ego_user_attributes(radius=1, attribute="username")
     labels = network.get_ego_user_attributes(radius=2, attribute="username")
@@ -55,7 +53,7 @@ def main(
             network_measures=measures.node_measures
         )
     else:
-        recommender = EgoNetworkRecommender(storage_bucket=CLOUD_STORAGE_BUCKET)
+        recommender = EgoNetworkRecommender(use_cache=True)
 
     recommender.train()
     recommender.test(targets)
@@ -65,4 +63,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    main(update_measures=True)
