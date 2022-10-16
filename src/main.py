@@ -63,4 +63,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main(update_neighborhood=False)
+    main(update_measures=True)

@@ -11,12 +11,12 @@ import pandas as pd
 try:
     from src.core import EgoNetwork
     from src.measures import EgoNetworkMeasures
-    from utils.io import DataReader
+    from utils.io import DataReader, DataWriter
     from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import EgoNetwork
     from ego_networks.src.measures import EgoNetworkMeasures
-    from ego_networks.utils.io import DataReader
+    from ego_networks.utils.io import DataReader, DataWriter
     from ego_networks.utils.custom_logger import CustomLogger
 
 filterwarnings("ignore")
@@ -75,7 +75,7 @@ class HomogenousEgoNetwork(EgoNetwork):
                 pd.Series(nodes[feature]).to_dict(),
                 feature,
             )
-
+        print(edges.shape, nodes.shape)
         G_e = nx.ego_graph(
             G, int(self._focal_node_id), radius=self._radius, undirected=False
         )
@@ -87,12 +87,17 @@ class HomogenousEgoNetwork(EgoNetwork):
         )
         return G_e
 
-    def create_measures(self, calculate_nodes=False, calculate_edges=False):
+    def create_measures(
+        self, calculate_nodes=False, calculate_edges=False, cache=True
+    ):
         measures = EgoNetworkMeasures(
             self.G,
             calculate_nodes=calculate_nodes,
             calculate_edges=calculate_edges,
         )
+        if cache:
+            writer = DataWriter(data=measures.node_measures, data_type="node_measures")
+            writer.run(append=False)
         return measures
 
     def get_ego_graph_at_radius(self, radius: int = 1):

@@ -95,8 +95,13 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         )
 
         new_ties, nodes = self.update_ties()
-        new_node_features = self.update_node_features(nodes=nodes)
+        if new_ties.shape[0] > 0:
+            writer = DataWriter(data=new_ties, data_type="ties")
+            writer.run(append=True)
+        else:
+            logger.info("No new ties to update neighborhood")
 
+        new_node_features = self.update_node_features(nodes=nodes)
         if new_node_features.shape[0] > 0:
             writer = DataWriter(
                 data=new_node_features, data_type="node_features"
@@ -104,12 +109,6 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             writer.run(append=True)
         else:
             logger.info("No new node features to update neighborhood")
-
-        if new_ties.shape[0] > 0:
-            writer = DataWriter(data=new_ties, data_type="ties")
-            writer.run(append=True)
-        else:
-            logger.info("No new ties to update neighborhood")
 
     def update_ties(self):
 
@@ -173,7 +172,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
     def update_node_features(self, nodes, sleep_time=0.1):
         try:
             previous_nodes_with_features = set(
-                self.previous_node_features.id.unique()
+                self.previous_node_features.index.unique()
             )
 
             logger.info(

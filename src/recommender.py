@@ -73,6 +73,7 @@ class EgoNetworkRecommender(NetworkRecommender):
         actuals = set(list(targets.keys()))
         true_positive = predicted.intersection(actuals)
         precision_k = round(len(true_positive) / len(predicted), 2)
+        print(len(actuals), k)
         recall_k = round(len(true_positive) / min(k, len(actuals)), 2)
         logger.info(f"Precision @ k: {k}: {precision_k}")
         logger.info(f"Recall @ k: {k}: {recall_k}")

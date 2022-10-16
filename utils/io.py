@@ -2,6 +2,7 @@
 import ast
 import os
 from warnings import filterwarnings
+from datetime import datetime
 
 import dask.dataframe as dd
 import pandas as pd
@@ -23,7 +24,7 @@ class DataConfig:
     file_paths = {
         "ties": f"{root_dir}/ties",
         "node_features": f"{root_dir}/features/node",
-        "node_measures": f"{root_dir}/measures/node/2",
+        "node_measures": f"{root_dir}/measures/node",
     }
 
 
@@ -34,10 +35,12 @@ class DataReader(DataConfig):
 
     def run(self):
         try:
-            data = dd.read_parquet(
-                path=self.file_paths.get(self.data_type)
+            data = dd.read_csv(
+                urlpath=f"{self.file_paths.get(self.data_type)}/*.csv",
             ).compute()
-            logger.info(f"Read successful: {self.data_type}")
+            logger.info(
+                f"Read successful: {self.data_type}, shape: {data.shape}"
+            )
             return self.__preprocess(data)
         except Exception as error:
             logger.error(f"Read unsuccessful: {self.data_type}, {error}")
@@ -60,12 +63,16 @@ class DataWriter(DataConfig):
         self.data = data
         self.data_type = data_type
 
-    def run(self, append=True, n_partitions=10):
+    def run(self, append=True):
         logger.info(f"Writing {self.data_type}: {self.data.shape}")
-        dd.to_parquet(
-            dd.from_pandas(self.data, npartitions=n_partitions),
-            path=self.file_paths.get(self.data_type),
-            append=append,
-            overwrite=not (append),
-            ignore_divisions=True,
+        file_path = self.file_paths.get(self.data_type)
+        if append:
+            run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
+            file_path = f"{file_path}/{self.data_type}_{run_time}"
+        else:
+            file_path = f"{file_path}/{self.data_type}"
+
+        self.data.to_csv(
+            f"{file_path}.csv",
+            index=False,
         )
