@@ -63,4 +63,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main(update_measures=True)
+    main(update_measures=False)

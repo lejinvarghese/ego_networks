@@ -34,15 +34,29 @@ An effort to study information flow and belief propogation through ego networks.
 
 -   Secondary goal (and perhaps more immediate) is to fully take control of personalized recommendations of entities from the second step network.
 
-## Run
 
-### Setup
+
+## Setup
+
+### CPU
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+### GPU
+
+```bash
+conda create -n rapids-22.08 -c rapidsai -c nvidia -c conda-forge  \
+cugraph=22.08 python=3.9 cudatoolkit=11.0
+conda activate rapids-22.08
+conda install pip
+pip install -r requirements_gpu.txt
+```
+
+## Run
 
 ### Source Code
 
@@ -51,7 +65,7 @@ source .venv/bin/activate
 python3 -m src.main
 ```
 
-### Streamlit Application
+## Streamlit Application
 
 ```bash
 source .venv/bin/activate
