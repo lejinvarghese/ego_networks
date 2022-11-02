@@ -157,14 +157,14 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
 
         new_ties = pd.json_normalize(new_ties)
 
-        total_alters = set()
+        alters_all = set()
         for i in range(1, self._max_radius + 1):
-            total_alters.update(alters.get(i).get("previous"))
-            total_alters.update(alters.get(i).get("current"))
+            alters_all.update(alters.get(i).get("previous"))
+            alters_all.update(alters.get(i).get("current"))
 
         # remove nan values
-        total_alters = {x for x in total_alters if x == x}
-        return new_ties, total_alters
+        alters_all = {x for x in alters_all if x == x}
+        return new_ties, alters_all
 
     def update_tie_features(self):
         pass
