@@ -23,9 +23,7 @@ logger = CustomLogger(__name__)
 class DataConfig:
     gcs_client = storage.Client()
     root_dir = os.getenv("CLOUD_STORAGE_BUCKET")
-    bucket_dir = root_dir.split("/")[-2:-1][0]
-    archive_dir = f"archive"
-    bucket = gcs_client.get_bucket(bucket_dir)
+    bucket = gcs_client.get_bucket(root_dir.split("/")[-2:-1][0])
     file_paths = {
         "ties": f"{root_dir}/ties",
         "node_features": f"{root_dir}/features/node",
@@ -95,7 +93,7 @@ class DataWriter(DataConfig):
             self.bucket.copy_blob(
                 blob,
                 self.bucket,
-                f"{self.archive_dir}/{blob.name}",
+                f"archive/{blob.name}",
             )
             # delete
             blob.delete()
