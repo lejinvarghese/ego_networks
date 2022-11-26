@@ -29,6 +29,7 @@ def main(
     k: int = 10,
     update_neighborhood: bool = False,
     update_measures: bool = False,
+    update_recommendations: bool = False,
 ):
     if update_neighborhood:
         twitter_hood = TwitterEgoNeighborhood(
@@ -36,16 +37,17 @@ def main(
             max_radius=2,
             api_bearer_token=TWITTER_API_BEARER_TOKEN,
         )
-        twitter_hood.update_neighborhood()
-
-    network = HomogenousEgoNetwork(
-        focal_node_id=INTEGRATED_FOCAL_NODE_ID,
-        radius=MAX_RADIUS,
-    )
-    targets = network.get_ego_user_attributes(radius=1, attribute="username")
-    labels = network.get_ego_user_attributes(radius=2, attribute="username")
+        twitter_hood.update_neighborhood(mode="append")
 
     if update_measures:
+        network = HomogenousEgoNetwork(
+            focal_node_id=INTEGRATED_FOCAL_NODE_ID,
+            radius=MAX_RADIUS,
+        )
+        targets = network.get_ego_user_attributes(
+            radius=1, attribute="username"
+        )
+        labels = network.get_ego_user_attributes(radius=2, attribute="username")
         measures = network.create_measures(
             calculate_nodes=True, calculate_edges=True
         )
@@ -55,12 +57,19 @@ def main(
     else:
         recommender = EgoNetworkRecommender(use_cache=True)
 
-    recommender.train()
-    recommender.test(targets)
-    recommendations = recommender.get_recommendations(targets, labels, k=k)
-    logger.info(recommendations)
-    return recommendations
+    if update_recommendations:
+        recommender.train()
+        recommender.test(targets)
+        recommendations = recommender.get_recommendations(targets, labels, k=k)
+        logger.info(recommendations)
+        return recommendations
+    else:
+        print("No recommendations updated during this run.")
 
 
 if __name__ == "__main__":
-    main(update_measures=True)
+    main(
+        update_neighborhood=True,
+        update_measures=True,
+        update_recommendations=True,
+    )

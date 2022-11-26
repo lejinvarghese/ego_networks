@@ -6,6 +6,7 @@ from datetime import datetime
 
 import dask.dataframe as dd
 import pandas as pd
+from google.cloud import storage
 
 from dotenv import load_dotenv
 
@@ -20,7 +21,11 @@ logger = CustomLogger(__name__)
 
 
 class DataConfig:
+    gcs_client = storage.Client()
     root_dir = os.getenv("CLOUD_STORAGE_BUCKET")
+    bucket_dir = root_dir.split("/")[-2:-1][0]
+    archive_dir = f"archive"
+    bucket = gcs_client.get_bucket(bucket_dir)
     file_paths = {
         "ties": f"{root_dir}/ties",
         "node_features": f"{root_dir}/features/node",
@@ -65,14 +70,32 @@ class DataWriter(DataConfig):
 
     def run(self, append=True):
         logger.info(f"Writing {self.data_type}: {self.data.shape}")
-        file_path = self.file_paths.get(self.data_type)
+
         if append:
             run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
-            file_path = f"{file_path}/{self.data_type}_{run_time}"
+            file_path = f"{self.file_paths.get(self.data_type)}/{self.data_type}_{run_time}"
         else:
-            file_path = f"{file_path}/{self.data_type}"
+            self.__remove()
+            file_path = (
+                f"{self.file_paths.get(self.data_type)}/{self.data_type}"
+            )
 
         self.data.to_csv(
             f"{file_path}.csv",
             index=False,
         )
+
+    def __remove(self):
+        directory_path = "/".join(
+            self.file_paths.get(self.data_type).split("/")[3:]
+        )
+        blobs = self.bucket.list_blobs(prefix=directory_path)
+        for blob in blobs:
+            # archive
+            self.bucket.copy_blob(
+                blob,
+                self.bucket,
+                f"{self.archive_dir}/{blob.name}",
+            )
+            # delete
+            blob.delete()

@@ -85,30 +85,53 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
     def focal_node_id(self):
         return self._focal_node_id
 
-    def update_neighborhood(self):
+    def update_neighborhood(self, mode="append"):
         """
         Updates the neighborhood of the focal node
         """
 
-        logger.info(
-            f"Updating the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
-        )
-
-        new_ties, nodes = self.update_ties()
-        if new_ties.shape[0] > 0:
-            writer = DataWriter(data=new_ties, data_type="ties")
-            writer.run(append=True)
-        else:
-            logger.info("No new ties to update neighborhood")
-
-        new_node_features = self.update_node_features(nodes=nodes)
-        if new_node_features.shape[0] > 0:
-            writer = DataWriter(
-                data=new_node_features, data_type="node_features"
+        if mode == "append":
+            logger.info(
+                f"Appending to the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
             )
-            writer.run(append=True)
-        else:
-            logger.info("No new node features to update neighborhood")
+            new_ties, nodes = self.update_ties()
+            if new_ties.shape[0] > 0:
+                writer = DataWriter(data=new_ties, data_type="ties")
+                writer.run(append=True)
+            else:
+                logger.info("No new ties to append to the neighborhood")
+
+            new_node_features = self.update_node_features(nodes=nodes)
+            if new_node_features.shape[0] > 0:
+                writer = DataWriter(
+                    data=new_node_features, data_type="node_features"
+                )
+                writer.run(append=True)
+            else:
+                logger.info(
+                    "No new node features to append to the neighborhood"
+                )
+        elif mode == "delete":
+            logger.warning(
+                f"Deleting stale ties in the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
+            )
+
+            cleansed_ties, cleansed_node_features = self.delete_ties()
+            if cleansed_ties.shape[0] > 0:
+                writer = DataWriter(data=cleansed_ties, data_type="ties")
+                writer.run(append=False)
+            else:
+                logger.info("No new ties to delete from the neighborhood")
+
+            if cleansed_node_features.shape[0] > 0:
+                writer = DataWriter(
+                    data=cleansed_node_features, data_type="node_features"
+                )
+                writer.run(append=False)
+            else:
+                logger.info(
+                    "No new node features to delete from the neighborhood"
+                )
 
     def update_ties(self):
 
@@ -122,30 +145,29 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             set(self.previous_ties.following.unique()) - alters[1]["previous"]
         )
 
-        logger.info(
-            f"Previous alters \n@radius 1: {len(alters.get(1).get('previous'))} \n@radius 2: {len(alters.get(2).get('previous'))} \nPrevious ties: {self.previous_ties.shape[0]}"
-        )
-
         alters[1]["current"] = set(
             get_users_following(
                 client=self._client, user_id=self._focal_node_id
             ).get("following")
         )
 
-        logger.info(
-            f"Current alters \n@radius 1: {len(alters.get(1).get('current'))}"
-        )
-
         alters[1]["new"] = alters.get(1).get("current") - alters.get(1).get(
             "previous"
         )
 
+        logger.info(
+            f"Previous alters \n@radius 1: {len(alters.get(1).get('previous'))} \n@radius 2: {len(alters.get(2).get('previous'))} \nPrevious ties: {self.previous_ties.shape[0]}"
+        )
+        logger.info(
+            f"Current alters \n@radius 1: {len(alters.get(1).get('current'))}"
+        )
         logger.info(f"New alters \n@radius 1: {len(alters.get(1).get('new'))}")
 
+        # get new ties, or new edges
         new_ties = [
             {
                 "user": self._focal_node_id,
-                "following": alters.get(1).get("current"),
+                "following": alters.get(1).get("new"),
             }
         ]
 
@@ -157,6 +179,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
 
         new_ties = pd.json_normalize(new_ties)
 
+        # recalculate all new nodes
         alters_all = set()
         for i in range(1, self._max_radius + 1):
             alters_all.update(alters.get(i).get("previous"))
@@ -217,3 +240,52 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
 
         new_node_features = pd.concat(new_node_features)
         return new_node_features
+
+    def delete_ties(self):
+
+        previous_alters = set(self.previous_ties.user.unique())
+        previous_alters.remove(self._focal_node_id)
+
+        current_alters = set(
+            get_users_following(
+                client=self._client, user_id=self._focal_node_id
+            ).get("following")
+        )
+
+        removed_alters = previous_alters - current_alters
+
+        removed_alter_usernames = pd.DataFrame(
+            get_users(
+                client=self._client,
+                user_fields=["username"],
+                user_ids=list(removed_alters),
+            )
+        ).username.unique()
+
+        # remove ties
+        cleansed_ties = self._previous_ties[
+            ~(self._previous_ties.user.isin(removed_alters))
+        ]
+        cleansed_ties = (
+            cleansed_ties.groupby("user")["following"]
+            .apply(list)
+            .reset_index(name="following")
+        )
+        cleansed_node_features = self._previous_node_features[
+            ~(
+                self._previous_node_features.username.isin(
+                    removed_alter_usernames
+                )
+            )
+        ]
+
+        logger.info(f"Previous Ties: {self._previous_ties.shape}")
+        logger.info(
+            f"Previous Node Features: {self._previous_node_features.shape}"
+        )
+        logger.warning(f"Removed alters: {len(removed_alters)}")
+        logger.warning(f"Cleansed Ties: {cleansed_ties.shape}")
+        logger.warning(
+            f"Cleansed Node Features: {cleansed_node_features.shape}"
+        )
+        return cleansed_ties, cleansed_node_features
