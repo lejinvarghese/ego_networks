@@ -134,11 +134,7 @@ def brokerage(graph, k=100, seed=42):
         .rename_axis(["source_node", "target_node"])
         .reset_index(name="measure_value")
     )
-    measure = (
-        e_cen_series.groupby("source_node").measure_value.mean()
-        # .reset_index()
-        # .rename(columns={"source_node": "node"})
-    )
+    measure = e_cen_series.groupby("source_node").measure_value.mean()
     return measure.to_dict()
 
 

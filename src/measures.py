@@ -10,10 +10,8 @@ import pandas as pd
 
 try:
     from src.core import NetworkMeasures
-    from utils.graph import brokerage
 except ModuleNotFoundError:
     from ego_networks.src.core import NetworkMeasures
-    from ego_networks.utils.graph import brokerage
 
 
 class EgoNetworkMeasures(NetworkMeasures):
@@ -93,7 +91,6 @@ class EgoNetworkMeasures(NetworkMeasures):
         )
         measures["pagerank"] = nx.pagerank_scipy(self.G)
         measures["hubs"], measures["authorities"] = nx.hits(self.G)
-        measures["brokerage"] = brokerage(self.G)
         measures_transformed = (
             pd.DataFrame.from_dict(measures, orient="index")
             .rename_axis(index="measure_name")
@@ -102,7 +99,7 @@ class EgoNetworkMeasures(NetworkMeasures):
                 var_name="node",
                 value_name="measure_value",
             )
-            .round(6)
+            .round(8)
             .reset_index()
             .sort_values(
                 by=["measure_name", "measure_value"],

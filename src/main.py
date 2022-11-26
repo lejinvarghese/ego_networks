@@ -37,17 +37,16 @@ def main(
             max_radius=2,
             api_bearer_token=TWITTER_API_BEARER_TOKEN,
         )
-        twitter_hood.update_neighborhood(mode="delete")
+        twitter_hood.update_neighborhood(mode="append")
+
+    network = HomogenousEgoNetwork(
+        focal_node_id=INTEGRATED_FOCAL_NODE_ID,
+        radius=MAX_RADIUS,
+    )
+    targets = network.get_ego_user_attributes(radius=1, attribute="username")
+    labels = network.get_ego_user_attributes(radius=2, attribute="username")
 
     if update_measures:
-        network = HomogenousEgoNetwork(
-            focal_node_id=INTEGRATED_FOCAL_NODE_ID,
-            radius=MAX_RADIUS,
-        )
-        targets = network.get_ego_user_attributes(
-            radius=1, attribute="username"
-        )
-        labels = network.get_ego_user_attributes(radius=2, attribute="username")
         measures = network.create_measures(
             calculate_nodes=True, calculate_edges=True
         )
@@ -64,12 +63,13 @@ def main(
         logger.info(recommendations)
         return recommendations
     else:
-        print("No recommendations updated during this run.")
+        logger.info("No recommendations updated during this run.")
 
 
 if __name__ == "__main__":
     main(
-        update_neighborhood=True,
+        k=20,
+        update_neighborhood=False,
         update_measures=False,
-        update_recommendations=False,
+        update_recommendations=True,
     )

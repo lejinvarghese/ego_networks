@@ -75,7 +75,6 @@ class HomogenousEgoNetwork(EgoNetwork):
                 pd.Series(nodes[feature]).to_dict(),
                 feature,
             )
-        print(edges.shape, nodes.shape)
         G_e = nx.ego_graph(
             G, int(self._focal_node_id), radius=self._radius, undirected=False
         )

@@ -48,32 +48,42 @@ class EgoNetworkRecommender(NetworkRecommender):
             index="node", columns="measure_name"
         )
         scores["measure_value"] = scores["measure_value"].fillna(value=0)
+        scores.columns = scores.columns.get_level_values(1)
 
         measures = scores.columns.values
         for i in measures:
             scores[i] = scores[i].rank(pct=True, method="dense")
 
         measure_weights = np.ones(scores.shape[1])
-        weights = {"brokerage": 5, "pagerank": 2}
-        for k, v in weights.items():
-            k_t = ("measure_value", k)
-            idx = np.argwhere(measures == k_t).flatten()
+        weights = {
+            "degree_centrality": -2,
+            "authorities": 2,
+            "pagerank": 2,
+            "hubs": 5,
+            "eigenvector_centrality": 10,
+        }
+        for i, d in enumerate(weights.items()):
+            k, v = d
+            idx = np.argwhere(measures == k)
             measure_weights[idx] = v
 
-        measure_weights[-1] = 5
         scores["rank_combined"] = scores.iloc[:, -len(measures) :].apply(
             gmean, weights=measure_weights, axis=1
         )
+        for i in measures:
+            print(
+                f"Percentiles for {i}: 75: {scores[i].quantile(0.75)}, 90: {scores[i].quantile(0.9)}, 99: {scores[i].quantile(1.0)}"
+            )
+
         scores = scores.sort_values(by="rank_combined", ascending=False)
         self.__model = scores
-        return scores
+        return np.round(scores, 2)
 
     def test(self, targets: dict, k: int = 100):
         predicted = set(self.__model.index.to_list()[:k])
         actuals = set(list(targets.keys()))
         true_positive = predicted.intersection(actuals)
         precision_k = round(len(true_positive) / len(predicted), 2)
-        print(len(actuals), k)
         recall_k = round(len(true_positive) / min(k, len(actuals)), 2)
         logger.info(f"Precision @ k: {k}: {precision_k}")
         logger.info(f"Recall @ k: {k}: {recall_k}")
