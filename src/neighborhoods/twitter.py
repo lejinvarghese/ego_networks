@@ -254,14 +254,6 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
 
         removed_alters = previous_alters - current_alters
 
-        removed_alter_usernames = pd.DataFrame(
-            get_users(
-                client=self._client,
-                user_fields=["username"],
-                user_ids=list(removed_alters),
-            )
-        ).username.unique()
-
         # remove ties
         cleansed_ties = self._previous_ties[
             ~(self._previous_ties.user.isin(removed_alters))
@@ -273,11 +265,12 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         )
         cleansed_node_features = self._previous_node_features[
             ~(
-                self._previous_node_features.username.isin(
-                    removed_alter_usernames
+                self._previous_node_features.index.isin(
+                    removed_alters
                 )
             )
         ]
+        cleansed_node_features = cleansed_node_features.reset_index()
 
         logger.info(f"Previous Ties: {self._previous_ties.shape}")
         logger.info(

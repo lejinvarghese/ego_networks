@@ -40,6 +40,7 @@ class DataReader(DataConfig):
         try:
             data = dd.read_csv(
                 urlpath=f"{self.file_paths.get(self.data_type)}/*.csv",
+                dtype={"withheld": "object"},
             ).compute()
             logger.info(
                 f"Read successful: {self.data_type}, shape: {data.shape}"
@@ -49,13 +50,18 @@ class DataReader(DataConfig):
             logger.error(f"Read unsuccessful: {self.data_type}, {error}")
             return pd.DataFrame()
 
+
     def __preprocess(self, data):
         if self.data_type == "ties":
             data.following = data.following.apply(ast.literal_eval)
             data = data.explode("following")
             return data.dropna()
         elif self.data_type == "node_features":
-            return data.drop_duplicates().set_index("id")
+            return (
+                data.drop_duplicates()
+                .set_index("id")
+                .drop(columns="witheld", errors="ignore")
+            )
         else:
             return data
 

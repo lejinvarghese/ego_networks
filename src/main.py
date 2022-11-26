@@ -37,7 +37,7 @@ def main(
             max_radius=2,
             api_bearer_token=TWITTER_API_BEARER_TOKEN,
         )
-        twitter_hood.update_neighborhood(mode="append")
+        twitter_hood.update_neighborhood(mode="delete")
 
     if update_measures:
         network = HomogenousEgoNetwork(
@@ -70,6 +70,6 @@ def main(
 if __name__ == "__main__":
     main(
         update_neighborhood=True,
-        update_measures=True,
-        update_recommendations=True,
+        update_measures=False,
+        update_recommendations=False,
     )
