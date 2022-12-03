@@ -70,10 +70,6 @@ class EgoNetworkRecommender(NetworkRecommender):
         scores["rank_combined"] = scores.iloc[:, -len(measures) :].apply(
             gmean, weights=measure_weights, axis=1
         )
-        # for i in measures:
-        #     print(
-        #         f"Percentiles for {i}: 75: {scores[i].quantile(0.75)}, 90: {scores[i].quantile(0.9)}, 99: {scores[i].quantile(1.0)}"
-        #     )
 
         scores = scores.sort_values(by="rank_combined", ascending=False)
         self.__model = scores
