@@ -1,4 +1,4 @@
-strategy_weights = {
+weights = {
     "diverse": {
         "degree_centrality": -10,
         "closeness_centrality": -5,

@@ -4,10 +4,10 @@ from pandas import DataFrame
 
 try:
     from src.models.ranking import WeightedMeasures
-    from src.models.strategies import strategy_weights
+    from src.models.strategies import weights
 except ModuleNotFoundError:
     from ego_networks.src.models.ranking import WeightedMeasures
-    from ego_networks.src.models.strategies import strategy_weights
+    from ego_networks.src.models.strategies import weights
 
 n_samples = 100
 measure = "pagerank"
@@ -32,7 +32,7 @@ def sample_weighted_measures(sample_data):
 
 @pytest.fixture
 def sample_strategy_weights():
-    return strategy_weights
+    return weights
 
 
 def test_strategies(sample_strategy_weights):

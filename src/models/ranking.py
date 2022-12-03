@@ -7,11 +7,11 @@ import numpy as np
 from scipy.stats import gmean
 
 try:
-    from src.models.strategies import strategy_weights
+    from src.models.strategies import weights
     from utils.custom_logger import CustomLogger
 
 except ModuleNotFoundError:
-    from ego_networks.src.models.strategies import strategy_weights
+    from ego_networks.src.models.strategies import weights
     from ego_networks.utils.custom_logger import CustomLogger
 
 logger = CustomLogger(__name__)
@@ -28,7 +28,7 @@ class WeightedMeasures:
         recommendation_strategy: str = "diverse",
     ):
         self._data = data
-        self._weights = strategy_weights.get(recommendation_strategy)
+        self._weights = weights.get(recommendation_strategy)
 
     def rank(self):
         X = self._data.copy()
