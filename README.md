@@ -6,18 +6,25 @@
     <img src="./assets/sample.png" alt="sample" width="500"/>
 </p>
 
+## Twitter User Recommendations
+
+
+<p float="left" align="middle">
+        <img src="./assets/recs_strategy_diverse.png" alt="sample" width="220"/>
+        <img src="./assets/recs_strategy_connectors.png" alt="sample" width="220"/>
+        <img src="./assets/recs_strategy_influencers.png" alt="sample" width="220"/>
+</p>
+
 ## Objectives
 
-An effort to study information flow and belief propogation through ego networks. The project aims to create a generic extensible framework for capturing, defining and curating measures for any ego network.
+This project is a broad effort to give an individual control over what information they consume, what sub communities they're connected, and how information diffusion over networks might affect their perspective. We want to study information flow and belief propogation through complex networks, help people find `highly personalized communities` from their immediate ego network, but also `avoid echo chambers, filter bubbles`.
 
--   We start with creating the two step neighborhood network for twitter social media, for the out neighbors. However, worth noting that the information flow is inward.
-
-<!-- <p align="center">
-    <img src="./assets/ego_network.png" alt="ego" width="500"/>
-</p> -->
-
--   This could extend to `heterogenous nodes` of multiple entities such as people, content etc.
--   This could also extend to a complex [multiplex network](https://cosnet.bifi.es/network-theory/multiplex-networks/) that captures multiple relationship types. Information would flow through multiple layers of the network with differing diffusion patterns.
+-   We start by creating the two step neighborhood network for `Twitter`.
+    -   We only consider the `out neighbors`, i.e. who the user follows, the intent being that it's who the user follows matter more than who follows the user.
+    -   The `information flow` however is inward.
+-    The framework is designed to be extensible to other social networks and other types of networks.
+     -   This could extend to a `heterogenous network` of multiple entities such as `people, content, communities, ideas` and relationships between them.
+     -   This could also extend to a complex [multiplex network](https://cosnet.bifi.es/network-theory/multiplex-networks/) that captures multiple relationship types. Information would flow through multiple layers of the network with differing diffusion patterns.
 
 <p align="center">
     <img src="https://cosnet.bifi.es/wp-content/uploads/2014/06/multiplex_networks_2a.jpg" alt="ego" width="500"/>
@@ -31,8 +38,6 @@ An effort to study information flow and belief propogation through ego networks.
     <img src="https://bldavies.com/blog/degroot-learning-social-networks/figures/example-1.svg" alt="ego" width="500"/>
 </p>
 
-
--   Secondary goal (and perhaps more immediate) is to fully take control of personalized recommendations of entities from the second step network.
 
 ## Run
 
@@ -58,11 +63,7 @@ source .venv/bin/activate
 streamlit run app.py
 ```
 
-## Twitter Follow Recommendations
 
-<p align="center">
-    <img src="./assets/recs.png" alt="sample" width="500"/>
-</p>
 
 ## Inspiration
 

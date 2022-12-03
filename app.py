@@ -2,10 +2,10 @@ import streamlit as st
 
 try:
     from src.main import main as engine
-    from utils.default import twitter_profile_image_preprocess
+    from utils.api.twitter import get_twitter_profile_image
 except ModuleNotFoundError:
     from ego_networks.src.main import main as engine
-    from ego_networks.utils.default import twitter_profile_image_preprocess
+    from ego_networks.utils.api.twitter import get_twitter_profile_image
 
 N_ROWS = 5
 HEADER_IMAGE = "https://assets.stickpng.com/images/580b57fcd9996e24bc43c53e.png"
@@ -85,7 +85,7 @@ def render_recommendations(
         zip(recommended_profiles, recommended_profile_images)
     ):
         user_name, profile_image = rec[0], rec[1]
-        profile_image = twitter_profile_image_preprocess(profile_image)
+        profile_image = get_twitter_profile_image(user_name, profile_image)
         col_idx = idx % n_cols
         with cols[col_idx]:
             st.write(f"{idx+1}: **{user_name}**")

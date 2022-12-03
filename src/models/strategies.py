@@ -12,9 +12,9 @@ weights = {
         "closeness_centrality": 10,
     },
     "influencers": {
-        "degree_centrality": 2,
+        "degree_centrality": 8,
         "eigenvector_centrality": 8,
-        "authorities": 8,
+        "authorities": 10,
         "pagerank": 10,
     },
 }
