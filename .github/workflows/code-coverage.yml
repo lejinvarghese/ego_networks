@@ -13,8 +13,8 @@ jobs:
               run: |
                   pip install -r ./requirements.txt
             - name: Export GCP default credentials
-                uses: google-github-actions/setup-gcloud@master
-                with:
+              uses: google-github-actions/setup-gcloud@master
+              with:
                   service_account_email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
                   service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
                   export_default_credentials: true
