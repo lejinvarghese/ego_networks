@@ -57,9 +57,9 @@ class EgoNetworkRecommender(NetworkRecommender):
         measure_weights = np.ones(scores.shape[1])
         weights = {
             "degree_centrality": -2,
-            "authorities": 2,
-            "pagerank": 2,
-            "hubs": 5,
+            "pagerank": 3,
+            "betweenness_centrality": 5,
+            "hubs": 10,
             "eigenvector_centrality": 10,
         }
         for i, d in enumerate(weights.items()):
@@ -70,10 +70,10 @@ class EgoNetworkRecommender(NetworkRecommender):
         scores["rank_combined"] = scores.iloc[:, -len(measures) :].apply(
             gmean, weights=measure_weights, axis=1
         )
-        for i in measures:
-            print(
-                f"Percentiles for {i}: 75: {scores[i].quantile(0.75)}, 90: {scores[i].quantile(0.9)}, 99: {scores[i].quantile(1.0)}"
-            )
+        # for i in measures:
+        #     print(
+        #         f"Percentiles for {i}: 75: {scores[i].quantile(0.75)}, 90: {scores[i].quantile(0.9)}, 99: {scores[i].quantile(1.0)}"
+        #     )
 
         scores = scores.sort_values(by="rank_combined", ascending=False)
         self.__model = scores
@@ -89,11 +89,18 @@ class EgoNetworkRecommender(NetworkRecommender):
         logger.info(f"Recall @ k: {k}: {recall_k}")
         return precision_k, recall_k
 
-    def get_recommendations(self, targets: dict, labels: dict, k: int = 10):
+    def get_recommendations(
+        self, targets: dict, labels: dict, profile_images: dict, k: int = 10
+    ):
         """
         Returns a list of recommendations for the focal node.
         """
         predicted = self.__model.index.to_list()
         actuals = list(targets.keys())
-        recs = [labels.get(i) for i in predicted if i not in actuals]
-        return recs[:k]
+        recs = [labels.get(i) for i in predicted if i not in actuals][:k]
+        profiles = [
+            profile_images.get(i)
+            for i in predicted
+            if i not in actuals
+        ][:k]
+        return recs, profiles

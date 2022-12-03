@@ -9,6 +9,8 @@ except ModuleNotFoundError:
 
 n_samples = 100
 measure = "pagerank"
+DEFAULT_PROFILE_URL = "https://cpraonline.files.wordpress.com/2014/07/new-twitter-logo-vector-200x200.png"
+
 
 @pytest.fixture
 def sample_measures():
@@ -30,6 +32,11 @@ def sample_targets():
 @pytest.fixture
 def sample_labels():
     return {str(i): "name" + "_" + str(i) for i in range(n_samples)}
+
+
+@pytest.fixture
+def sample_profile_images():
+    return {str(i): DEFAULT_PROFILE_URL for i in range(n_samples)}
 
 
 def test_recommender_train(sample_measures):
@@ -55,13 +62,19 @@ def test_recommender_test(sample_measures, sample_targets):
 
 
 def test_recommender_recommendations(
-    sample_measures, sample_targets, sample_labels
+    sample_measures, sample_targets, sample_labels, sample_profile_images
 ):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
     recommender.train()
-    recommendations = recommender.get_recommendations(
-        sample_targets, sample_labels, k=3
+    (
+        recommended_profiles,
+        recommended_profile_images,
+    ) = recommender.get_recommendations(
+        sample_targets, sample_labels, sample_profile_images, k=3
     )
-    assert recommendations[0] == "name_99"
-    assert recommendations[1] == "name_98"
-    assert recommendations[2] == "name_97"
+    assert recommended_profiles[0] == "name_99"
+    assert recommended_profiles[1] == "name_98"
+    assert recommended_profiles[2] == "name_97"
+    assert recommended_profile_images[0] == DEFAULT_PROFILE_URL
+    assert recommended_profile_images[1] == DEFAULT_PROFILE_URL
+    assert recommended_profile_images[2] == DEFAULT_PROFILE_URL

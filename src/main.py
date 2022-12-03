@@ -29,7 +29,7 @@ def main(
     k: int = 10,
     update_neighborhood: bool = False,
     update_measures: bool = False,
-    update_recommendations: bool = False,
+    update_recommendations: bool = True,
 ):
     if update_neighborhood:
         twitter_hood = TwitterEgoNeighborhood(
@@ -43,8 +43,6 @@ def main(
         focal_node_id=INTEGRATED_FOCAL_NODE_ID,
         radius=MAX_RADIUS,
     )
-    targets = network.get_ego_user_attributes(radius=1, attribute="username")
-    labels = network.get_ego_user_attributes(radius=2, attribute="username")
 
     if update_measures:
         measures = network.create_measures(
@@ -57,11 +55,20 @@ def main(
         recommender = EgoNetworkRecommender(use_cache=True)
 
     if update_recommendations:
+        targets = network.get_ego_user_attributes(
+            radius=1, attribute="username"
+        )
+        labels = network.get_ego_user_attributes(radius=2, attribute="username")
+        profile_images = network.get_ego_user_attributes(
+            radius=2, attribute="profile_image_url"
+        )
         recommender.train()
         recommender.test(targets)
-        recommendations = recommender.get_recommendations(targets, labels, k=k)
-        logger.info(recommendations)
-        return recommendations
+        recommended_profiles, recommended_profile_images = recommender.get_recommendations(
+            targets, labels, profile_images, k=k
+        )
+        logger.info(recommended_profiles)
+        return recommended_profiles, recommended_profile_images
     else:
         logger.info("No recommendations updated during this run.")
 

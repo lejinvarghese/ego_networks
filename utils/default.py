@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
+import urllib
 from datetime import datetime
 from warnings import filterwarnings
 
@@ -25,3 +26,13 @@ def split_into_batches(src_list: list, batch_size: int):
 
     logger.info(f"Total batches: {len(batches)}, batch size: {len(batches[0])}")
     return batches
+
+
+def file_exists(location):
+    request = urllib.request.Request(location)
+    request.get_method = lambda: "HEAD"
+    try:
+        response = urllib.request.urlopen(request)
+        return True
+    except urllib.error.HTTPError:
+        return False
