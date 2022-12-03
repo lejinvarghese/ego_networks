@@ -117,3 +117,10 @@ def test_get_node_features(twitter_neighborhood, sample_nodes):
     assert set(actual.columns.values) == set(feature_fields)
     assert actual.shape[0] > 0
     assert actual.shape[1] == len(feature_fields)
+
+def test_delete_ties(twitter_neighborhood):
+    cleansed_ties, cleansed_node_features = twitter_neighborhood.delete_ties()
+    assert type(cleansed_ties) == DataFrame
+    assert type(cleansed_node_features) == DataFrame
+    assert cleansed_ties.shape[1] > 0
+    assert cleansed_node_features.shape[1] > 0
