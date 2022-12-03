@@ -49,20 +49,32 @@ def render_sidebar():
             label="Update Measures",
             options=[False, True],
         )
+        recommendation_strategy = st.selectbox(
+            label="Recommendation Strategy",
+            options=["Diverse", "Connectors", "Influencers"],
+        )
         run = st.button("Run")
-        return n_recommendations, update_neighborhood, update_measures, run
+        return (
+            n_recommendations,
+            update_neighborhood,
+            update_measures,
+            recommendation_strategy.lower(),
+            run,
+        )
 
 
 def render_recommendations(
     n_recommendations,
     update_neighborhood,
     update_measures,
+    recommendation_strategy,
 ):
     with st.spinner("Wait for it..."):
         recommended_profiles, recommended_profile_images = engine(
             k=n_recommendations,
             update_neighborhood=update_neighborhood,
             update_measures=update_measures,
+            recommendation_strategy=recommendation_strategy,
         )
 
     st.title("**Recommendations**")
@@ -90,6 +102,7 @@ def main():
         n_recommendations,
         update_neighborhood,
         update_measures,
+        recommendation_strategy,
         run,
     ) = render_sidebar()
 
@@ -98,6 +111,7 @@ def main():
             n_recommendations,
             update_neighborhood,
             update_measures,
+            recommendation_strategy,
         )
 
 

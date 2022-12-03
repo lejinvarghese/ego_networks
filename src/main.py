@@ -30,6 +30,7 @@ def main(
     update_neighborhood: bool = False,
     update_measures: bool = False,
     update_recommendations: bool = True,
+    recommendation_strategy: str = "diverse",
 ):
     if update_neighborhood:
         twitter_hood = TwitterEgoNeighborhood(
@@ -62,9 +63,12 @@ def main(
         profile_images = network.get_ego_user_attributes(
             radius=2, attribute="profile_image_url"
         )
-        recommender.train()
+        recommender.train(recommendation_strategy)
         recommender.test(targets)
-        recommended_profiles, recommended_profile_images = recommender.get_recommendations(
+        (
+            recommended_profiles,
+            recommended_profile_images,
+        ) = recommender.get_recommendations(
             targets, labels, profile_images, k=k
         )
         logger.info(recommended_profiles)
@@ -79,4 +83,5 @@ if __name__ == "__main__":
         update_neighborhood=False,
         update_measures=False,
         update_recommendations=True,
+        recommendation_strategy="diverse",
     )
