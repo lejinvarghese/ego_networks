@@ -102,6 +102,14 @@ def test_neighborhood_instantiation(twitter_neighborhood):
     assert twitter_neighborhood.max_radius == MAX_RADIUS
 
 
+def test_update_ties(twitter_neighborhood):
+    new_ties, alters_all = twitter_neighborhood.update_ties()
+    assert type(new_ties) == DataFrame
+    assert type(alters_all) == set
+    assert new_ties.shape[0] >= 0
+    assert new_ties.shape[1] > 0
+    assert len(alters_all) >= 0
+
 def test_get_node_features(twitter_neighborhood, sample_nodes):
     actual = twitter_neighborhood.update_node_features(nodes=sample_nodes)
     feature_fields = [
@@ -117,6 +125,12 @@ def test_get_node_features(twitter_neighborhood, sample_nodes):
     assert set(actual.columns.values) == set(feature_fields)
     assert actual.shape[0] > 0
     assert actual.shape[1] == len(feature_fields)
+
+
+def test_update_tie_features(twitter_neighborhood):
+    actual = twitter_neighborhood.update_tie_features()
+    assert actual is None
+
 
 def test_delete_ties(twitter_neighborhood):
     cleansed_ties, cleansed_node_features = twitter_neighborhood.delete_ties()
