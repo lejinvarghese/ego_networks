@@ -2,29 +2,30 @@ import streamlit as st
 
 try:
     from src.main import main as engine
-    from utils.default import file_exists
+    from utils.default import twitter_profile_image_preprocess
 except ModuleNotFoundError:
     from ego_networks.src.main import main as engine
-    from ego_networks.utils.default import file_exists
+    from ego_networks.utils.default import twitter_profile_image_preprocess
 
-DEFAULT_PROFILE_URL = "https://cpraonline.files.wordpress.com/2014/07/new-twitter-logo-vector-200x200.png"
-IMAGE_SIZE = 200
 N_ROWS = 5
+HEADER_IMAGE = "https://assets.stickpng.com/images/580b57fcd9996e24bc43c53e.png"
 
 
-def main():
+def render_header(header_image):
     st.title("Recommendations from your Ego Network")
     """
-    Currently generates recommendations from the Twitter Ego Network.
+    Generates recommendations from the Twitter Ego Network.
     """
     with open("style.css") as css:
         st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
     st.image(
-        image="https://assets.stickpng.com/images/580b57fcd9996e24bc43c53e.png",
+        image=header_image,
         width=50,
     )
 
+
+def render_sidebar():
     with st.sidebar:
         st.title("Settings")
         st.write(
@@ -41,39 +42,63 @@ def main():
             step=5,
         )
 
-        update_nb_button = st.selectbox(
+        update_neighborhood = st.selectbox(
             label="Update Neighborhood", options=[False, True]
         )
-        update_ms_button = st.selectbox(
+        update_measures = st.selectbox(
             label="Update Measures",
             options=[False, True],
         )
-        run_button = st.button("Run")
+        run = st.button("Run")
+        return n_recommendations, update_neighborhood, update_measures, run
 
-    if run_button:
-        with st.spinner("Wait for it..."):
-            recommended_profiles, recommended_profile_images = engine(
-                k=n_recommendations,
-                update_neighborhood=update_nb_button,
-                update_measures=update_ms_button,
+
+def render_recommendations(
+    n_recommendations,
+    update_neighborhood,
+    update_measures,
+):
+    with st.spinner("Wait for it..."):
+        recommended_profiles, recommended_profile_images = engine(
+            k=n_recommendations,
+            update_neighborhood=update_neighborhood,
+            update_measures=update_measures,
+        )
+
+    st.title("**Recommendations**")
+    n_cols = len(recommended_profiles) // N_ROWS
+    cols = st.columns(n_cols)
+
+    for idx, rec in enumerate(
+        zip(recommended_profiles, recommended_profile_images)
+    ):
+        user_name, profile_image = rec[0], rec[1]
+        profile_image = twitter_profile_image_preprocess(profile_image)
+        col_idx = idx % n_cols
+        with cols[col_idx]:
+            st.write(f"{idx+1}: **{user_name}**")
+            st.markdown(
+                f"[![image]({profile_image})](http://twitter.com/{user_name})"
             )
 
-        st.title("**Recommendations**")
-        n_cols = len(recommended_profiles) // N_ROWS
-        cols = st.columns(n_cols)
 
-        for idx, rec in enumerate(
-            zip(recommended_profiles, recommended_profile_images)
-        ):
-            user, img = rec[0], rec[1].replace(
-                "_normal", f"_{IMAGE_SIZE}x{IMAGE_SIZE}"
-            )
-            if not (file_exists(img)):
-                img = DEFAULT_PROFILE_URL
-            col_idx = idx % n_cols
-            with cols[col_idx]:
-                st.write(f"**{idx+1}: {user}**")
-                st.markdown(f"[![image]({img})](http://twitter.com/{user})")
+def main():
+    st.set_page_config(layout="wide")
+    render_header(header_image=HEADER_IMAGE)
+
+    (
+        n_recommendations,
+        update_neighborhood,
+        update_measures,
+        run,
+    ) = render_sidebar()
+
+    if run:
+        render_recommendations(
+            n_recommendations,
+            update_neighborhood,
+            update_measures,
+        )
 
 
 if __name__ == "__main__":

@@ -141,9 +141,10 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             for i in range(1, self._max_radius + 1)
         }
         alters[1]["previous"] = set(self.previous_ties.user.unique())
-        alters[2]["previous"] = (
-            set(self.previous_ties.following.unique()) - alters[1]["previous"]
-        )
+        if self._max_radius == 2:
+            alters[2]["previous"] = set(
+                self.previous_ties.following.unique()
+            ) - alters.get(1).get("previous")
 
         alters[1]["current"] = set(
             get_users_following(
@@ -156,8 +157,13 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         )
 
         logger.info(
-            f"Previous alters \n@radius 1: {len(alters.get(1).get('previous'))} \n@radius 2: {len(alters.get(2).get('previous'))} \nPrevious ties: {self.previous_ties.shape[0]}"
+            f"Previous alters @radius 1: {len(alters.get(1).get('previous'))}"
         )
+        if self._max_radius == 2:
+            logger.info(
+                f"Previous alters @radius 2: {len(alters.get(2).get('previous'))}"
+            )
+        logger.info(f"Previous ties: {self.previous_ties.shape[0]}")
         logger.info(
             f"Current alters \n@radius 1: {len(alters.get(1).get('current'))}"
         )
@@ -171,11 +177,12 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             }
         ]
 
-        for u_id in alters.get(1).get("new"):
-            u_data = get_users_following(client=self._client, user_id=u_id)
-            if len(u_data.get("following")) > 0:
-                new_ties.append(u_data)
-                alters[2]["new"].update(set(u_data.get("following")))
+        if self._max_radius == 2:
+            for u_id in alters.get(1).get("new"):
+                u_data = get_users_following(client=self._client, user_id=u_id)
+                if len(u_data.get("following")) > 0:
+                    new_ties.append(u_data)
+                    alters[2]["new"].update(set(u_data.get("following")))
 
         new_ties = pd.json_normalize(new_ties)
 
@@ -264,11 +271,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             .reset_index(name="following")
         )
         cleansed_node_features = self._previous_node_features[
-            ~(
-                self._previous_node_features.index.isin(
-                    removed_alters
-                )
-            )
+            ~(self._previous_node_features.index.isin(removed_alters))
         ]
         cleansed_node_features = cleansed_node_features.reset_index()
 

@@ -9,11 +9,19 @@ jobs:
               uses: actions/setup-python@master
               with:
                   python-version: 3.8
-            - name: Generate coverage report
-              env:
-                  TWITTER_API_BEARER_TOKEN: ${{ secrets.TWITTER_API_BEARER_TOKEN }}
+            - name: Install dependencies
               run: |
                   pip install -r ./requirements.txt
+            - id: auth
+              name: Authenticate to Google Cloud
+              uses: google-github-actions/auth@v1
+              with:
+                  credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+            - name: Run tests and generate test coverage report
+              env:
+                  TWITTER_API_BEARER_TOKEN: ${{ secrets.TWITTER_API_BEARER_TOKEN }}
+                  CLOUD_STORAGE_BUCKET: ${{ secrets.CLOUD_STORAGE_BUCKET }}
+              run: |
                   pytest --cov=./src --cov-report=xml
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v1.0.3
