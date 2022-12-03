@@ -28,7 +28,7 @@ def split_into_batches(src_list: list, batch_size: int):
     return batches
 
 
-def file_exists(location):
+def file_exists(location: str) -> bool:
     request = urllib.request.Request(location)
     request.get_method = lambda: "HEAD"
     try:
@@ -36,3 +36,15 @@ def file_exists(location):
         return True
     except urllib.error.HTTPError:
         return False
+
+
+def twitter_profile_image_preprocess(
+    image_url: str,
+    default_image_url: str = "https://cpraonline.files.wordpress.com/2014/07/new-twitter-logo-vector-200x200.png",
+    image_size: int = 200,
+):
+    image_url = image_url.replace("_normal", f"_{image_size}x{image_size}")
+    if file_exists(image_url):
+        return image_url
+    else:
+        return default_image_url
