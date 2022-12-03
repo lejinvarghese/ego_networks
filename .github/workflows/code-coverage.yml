@@ -20,6 +20,7 @@ jobs:
             - name: Run tests and generate test coverage report
               env:
                   TWITTER_API_BEARER_TOKEN: ${{ secrets.TWITTER_API_BEARER_TOKEN }}
+                  CLOUD_STORAGE_BUCKET: ${{ secrets.CLOUD_STORAGE_BUCKET }}
               run: |
                   pytest --cov=./src --cov-report=xml
             - name: Upload coverage to Codecov
