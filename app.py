@@ -29,7 +29,7 @@ def main():
         st.title("Settings")
         st.write(
             """
-            This app helps you to generate your own Twitter recommendations.
+            This app helps you generate your own Twitter user recommendations.
             """
         )
 
