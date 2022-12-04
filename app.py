@@ -8,7 +8,7 @@ except ModuleNotFoundError:
     from ego_networks.utils.api.twitter import get_twitter_profile_image
 
 N_ROWS = 5
-HEADER_IMAGE = "https://assets.stickpng.com/images/580b57fcd9996e24bc43c53e.png"
+HEADER_IMAGE = "https://www.freepnglogos.com/uploads/twitter-logo-png/twitter-logo-vector-png-clipart-1.png"
 
 
 def render_header(header_image):

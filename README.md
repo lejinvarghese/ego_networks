@@ -6,25 +6,17 @@
     <img src="./assets/sample.png" alt="sample" width="500"/>
 </p>
 
-## Twitter User Recommendations
-
-
-<p float="left" align="middle">
-        <img src="./assets/recs_strategy_diverse.png" alt="sample" width="220"/>
-        <img src="./assets/recs_strategy_connectors.png" alt="sample" width="220"/>
-        <img src="./assets/recs_strategy_influencers.png" alt="sample" width="220"/>
-</p>
 
 ## Objectives
 
 This project is a broad effort to give an individual control over what information they consume, what sub communities they're connected, and how information diffusion over networks might affect their perspective. We want to study information flow and belief propogation through complex networks, help people find `highly personalized communities` from their immediate ego network, but also `avoid echo chambers, filter bubbles`.
 
 -   We start by creating the two step neighborhood network for `Twitter`.
-    -   We only consider the `out neighbors`, i.e. who the user follows, the intent being that it's who the user follows matter more than who follows the user.
-    -   The `information flow` however is inward.
--    The framework is designed to be extensible to other social networks and other types of networks.
-     -   This could extend to a `heterogenous network` of multiple entities such as `people, content, communities, ideas` and relationships between them.
-     -   This could also extend to a complex [multiplex network](https://cosnet.bifi.es/network-theory/multiplex-networks/) that captures multiple relationship types. Information would flow through multiple layers of the network with differing diffusion patterns.
+    -   We only consider the `out neighbors`, i.e. who the user follows (or friends?), the intent being that it's who the user follows matter more than who follows the user.
+    -   However, the `information flow` is inward.
+-    The framework is designed to be extensible to other social networks and other types of content and idea networks.
+     -   Work is in progress to extend this to a `heterogenous network` of multiple entities such as `people, content, communities, ideas` and differing relationships between them.
+     -   This could also extend to a complex [multiplex network](https://cosnet.bifi.es/network-theory/multiplex-networks/), in which nformation would flow through multiple layers of the network (imagine real and virtual multi layered networks) with differing diffusion patterns.
 
 <p align="center">
     <img src="https://cosnet.bifi.es/wp-content/uploads/2014/06/multiplex_networks_2a.jpg" alt="ego" width="500"/>
@@ -63,7 +55,20 @@ source .venv/bin/activate
 streamlit run app.py
 ```
 
+## Twitter User Recommendations
 
+<p float="left" align="middle">
+        <img src="./assets/recs_strategy_diverse.png" alt="sample" width="220"/>
+        <img src="./assets/recs_strategy_connectors.png" alt="sample" width="220"/>
+        <img src="./assets/recs_strategy_influencers.png" alt="sample" width="220"/>
+</p>
+
+### Observations
+
+- The `diverse` recommendation algorithms are tuned to use network measures to surface a list spread across ideological diversity, which can be seen in these top three recommendations.
+- The `connector` algorithms are tuned to surface users who are likely to be network integrators, which in this case have a higher proportion of scientific and government institutions.
+- The `influencer` algorithms are tuned to surface users who are likely to be popular ideological influencers.
+- These will in future evolve to include more nuanced strategies and measures.
 
 ## Inspiration
 
