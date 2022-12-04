@@ -42,7 +42,7 @@ def sample_profile_images():
 def test_recommender_train(sample_measures):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
 
-    results = recommender.train()
+    results = recommender.train(recommendation_strategy="diverse")
 
     actual = results.iloc[-1, -1]
     expected = 1 / n_samples
@@ -55,7 +55,7 @@ def test_recommender_train(sample_measures):
 
 def test_recommender_test(sample_measures, sample_targets):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
-    recommender.train()
+    recommender.train(recommendation_strategy="diverse")
     precision, recall = recommender.test(sample_targets)
     assert precision == 0.5
     assert recall == 1.0
@@ -65,7 +65,7 @@ def test_recommender_recommendations(
     sample_measures, sample_targets, sample_labels, sample_profile_images
 ):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
-    recommender.train()
+    recommender.train(recommendation_strategy="diverse")
     (
         recommended_profiles,
         recommended_profile_images,

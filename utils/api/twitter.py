@@ -6,8 +6,10 @@ from warnings import filterwarnings
 from dotenv import load_dotenv
 
 try:
+    from utils.default import url_exists
     from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
+    from ego_networks.utils.default import url_exists
     from ego_networks.utils.custom_logger import CustomLogger
 
 load_dotenv()
@@ -56,3 +58,28 @@ def get_users(client, user_fields, user_names=None, user_ids=None):
         raise ValueError(
             "Either one of user_names or user_ids should be provided"
         )
+
+
+def get_twitter_profile_image(
+    user_name: str,
+    image_url: str,
+    image_size: int = 200,
+) -> bool:
+
+    if not (url_exists(image_url)):
+        image_url = get_user_profile_image(user_name)
+    return image_url.replace("_normal", f"_{image_size}x{image_size}")
+
+
+def get_user_profile_image(
+    user_name: str,
+    default_image_url: str = "https://cpraonline.files.wordpress.com/2014/07/new-twitter-logo-vector-200x200.png",
+):
+    client = authenticate(TWITTER_API_BEARER_TOKEN)
+    image_url = get_users(
+        client, user_fields=["profile_image_url"], user_names=[user_name]
+    )[0].get("profile_image_url")
+    if image_url:
+        return image_url
+    else:
+        return default_image_url

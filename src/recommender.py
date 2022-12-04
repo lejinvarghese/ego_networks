@@ -1,17 +1,18 @@
 """
-Relevant documentation
+Recommender class
 """
 
 import pandas as pd
 import numpy as np
-from scipy.stats import gmean
 
 try:
     from src.core import NetworkRecommender
+    from src.models.ranking import WeightedMeasures
     from utils.io import DataReader
     from utils.custom_logger import CustomLogger
 except ModuleNotFoundError:
     from ego_networks.src.core import NetworkRecommender
+    from ego_networks.src.models.ranking import WeightedMeasures
     from ego_networks.utils.io import DataReader
     from ego_networks.utils.custom_logger import CustomLogger
 
@@ -42,45 +43,21 @@ class EgoNetworkRecommender(NetworkRecommender):
                 "Either calculated or cached network_measures should be provided."
             )
 
-    def train(self, weights: dict = None):
+    def train(self, recommendation_strategy):
 
-        scores = self.network_measures.pivot(
+        measures = self.network_measures.pivot(
             index="node", columns="measure_name"
         )
-        scores["measure_value"] = scores["measure_value"].fillna(value=0)
-        scores.columns = scores.columns.get_level_values(1)
-
-        measures = scores.columns.values
-        for i in measures:
-            scores[i] = scores[i].rank(pct=True, method="dense")
-
-        measure_weights = np.ones(scores.shape[1])
-        weights = {
-            "degree_centrality": -2,
-            "pagerank": 3,
-            "betweenness_centrality": 5,
-            "hubs": 10,
-            "eigenvector_centrality": 10,
-        }
-        for i, d in enumerate(weights.items()):
-            k, v = d
-            idx = np.argwhere(measures == k)
-            measure_weights[idx] = v
-
-        scores["rank_combined"] = scores.iloc[:, -len(measures) :].apply(
-            gmean, weights=measure_weights, axis=1
+        measures["measure_value"] = measures["measure_value"].fillna(value=0)
+        measures.columns = measures.columns.get_level_values(1)
+        model = WeightedMeasures(
+            data=measures, recommendation_strategy=recommendation_strategy
         )
-        # for i in measures:
-        #     print(
-        #         f"Percentiles for {i}: 75: {scores[i].quantile(0.75)}, 90: {scores[i].quantile(0.9)}, 99: {scores[i].quantile(1.0)}"
-        #     )
-
-        scores = scores.sort_values(by="rank_combined", ascending=False)
-        self.__model = scores
-        return np.round(scores, 2)
+        self.__ranks = model.rank()
+        return np.round(self.__ranks, 2)
 
     def test(self, targets: dict, k: int = 100):
-        predicted = set(self.__model.index.to_list()[:k])
+        predicted = set(self.__ranks.index.to_list()[:k])
         actuals = set(list(targets.keys()))
         true_positive = predicted.intersection(actuals)
         precision_k = round(len(true_positive) / len(predicted), 2)
@@ -95,12 +72,10 @@ class EgoNetworkRecommender(NetworkRecommender):
         """
         Returns a list of recommendations for the focal node.
         """
-        predicted = self.__model.index.to_list()
+        predicted = self.__ranks.index.to_list()
         actuals = list(targets.keys())
         recs = [labels.get(i) for i in predicted if i not in actuals][:k]
         profiles = [
-            profile_images.get(i)
-            for i in predicted
-            if i not in actuals
+            profile_images.get(i) for i in predicted if i not in actuals
         ][:k]
         return recs, profiles

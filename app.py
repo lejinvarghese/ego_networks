@@ -2,13 +2,13 @@ import streamlit as st
 
 try:
     from src.main import main as engine
-    from utils.default import twitter_profile_image_preprocess
+    from utils.api.twitter import get_twitter_profile_image
 except ModuleNotFoundError:
     from ego_networks.src.main import main as engine
-    from ego_networks.utils.default import twitter_profile_image_preprocess
+    from ego_networks.utils.api.twitter import get_twitter_profile_image
 
 N_ROWS = 5
-HEADER_IMAGE = "https://assets.stickpng.com/images/580b57fcd9996e24bc43c53e.png"
+HEADER_IMAGE = "https://www.freepnglogos.com/uploads/twitter-logo-png/twitter-logo-vector-png-clipart-1.png"
 
 
 def render_header(header_image):
@@ -16,7 +16,7 @@ def render_header(header_image):
     """
     Generates recommendations from the Twitter Ego Network.
     """
-    with open("style.css") as css:
+    with open(".streamlit/style.css") as css:
         st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
     st.image(
@@ -49,20 +49,32 @@ def render_sidebar():
             label="Update Measures",
             options=[False, True],
         )
+        recommendation_strategy = st.selectbox(
+            label="Recommendation Strategy",
+            options=["Diverse", "Connectors", "Influencers"],
+        )
         run = st.button("Run")
-        return n_recommendations, update_neighborhood, update_measures, run
+        return (
+            n_recommendations,
+            update_neighborhood,
+            update_measures,
+            recommendation_strategy.lower(),
+            run,
+        )
 
 
 def render_recommendations(
     n_recommendations,
     update_neighborhood,
     update_measures,
+    recommendation_strategy,
 ):
     with st.spinner("Wait for it..."):
         recommended_profiles, recommended_profile_images = engine(
             k=n_recommendations,
             update_neighborhood=update_neighborhood,
             update_measures=update_measures,
+            recommendation_strategy=recommendation_strategy,
         )
 
     st.title("**Recommendations**")
@@ -73,7 +85,7 @@ def render_recommendations(
         zip(recommended_profiles, recommended_profile_images)
     ):
         user_name, profile_image = rec[0], rec[1]
-        profile_image = twitter_profile_image_preprocess(profile_image)
+        profile_image = get_twitter_profile_image(user_name, profile_image)
         col_idx = idx % n_cols
         with cols[col_idx]:
             st.write(f"{idx+1}: **{user_name}**")
@@ -90,6 +102,7 @@ def main():
         n_recommendations,
         update_neighborhood,
         update_measures,
+        recommendation_strategy,
         run,
     ) = render_sidebar()
 
@@ -98,6 +111,7 @@ def main():
             n_recommendations,
             update_neighborhood,
             update_measures,
+            recommendation_strategy,
         )
 
 
