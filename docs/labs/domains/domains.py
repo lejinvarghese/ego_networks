@@ -16,22 +16,20 @@ import tensorflow as tf
 import tensorflow_hub as hub
 from faiss import IndexFlatL2, get_num_gpus, index_cpu_to_all_gpus
 
-from utils import draw_graph_interactive, timer
+# from utils.graph import draw_interaction_graph
 
 tf.get_logger().setLevel("ERROR")
 filterwarnings("ignore")
 
-N_GPU = get_num_gpus()
-print(f"Number of GPUs: {N_GPU}")
+# N_GPU = get_num_gpus()
+# print(f"Number of GPUs: {N_GPU}")
 
 
-@timer
 def get_embeddings(model, tokens):
     embeddings = np.array(hub.load(model)(tokens))
     return embeddings
 
 
-@timer
 def get_similarities(embeddings, tokens):
     cpu_index = IndexFlatL2(embeddings.shape[1])
     gpu_index = index_cpu_to_all_gpus(cpu_index)
@@ -84,7 +82,7 @@ def get_similarities(embeddings, tokens):
     return similar_tokens
 
 
-if __name__ == "__main__":
+def main():
     tokens = [
         "complexity theory",
         "reinforcement learning",
@@ -124,11 +122,11 @@ if __name__ == "__main__":
         "robotics",
         "game theory",
     ]
+
     models = [
         "https://tfhub.dev/google/universal-sentence-encoder-large/5",
     ]
     results = []
-
     print(f"Sample tokens: {tokens[:5]}, Total tokens: {len(tokens)}")
 
     embeddings = get_embeddings(models[0], tokens)
@@ -144,16 +142,20 @@ if __name__ == "__main__":
     )
     print(similar_tokens.head(10))
 
-    G = nx.from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
+    # G = nx.from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
 
-    size_map = nx.betweenness_centrality(
-        G, weight="weight", normalized=True, endpoints=True, seed=42
-    )
+    # size_map = nx.betweenness_centrality(
+    #     G, weight="weight", normalized=True, endpoints=True, seed=42
+    # )
 
-    color_map = community_louvain.best_partition(G, resolution=0.5)
+    # color_map = community_louvain.best_partition(G, resolution=0.5)
 
-    fig = draw_graph_interactive(
-        G, color_map=color_map, size_map=size_map, title=" "
-    )
-    fig.write_html("domains/output.html")
-    fig.write_image("domains/output.png", scale=3.0)
+    # fig = draw_interaction_graph(
+    #     G, color_map=color_map, size_map=size_map, title=" "
+    # )
+    # fig.write_html("domains/output.html")
+    # fig.write_image("domains/output.png", scale=3.0)
+
+
+if __name__ == "__main__":
+    main()
