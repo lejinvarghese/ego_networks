@@ -110,6 +110,7 @@ def test_update_ties(twitter_neighborhood):
     assert new_ties.shape[1] > 0
     assert len(alters_all) >= 0
 
+
 def test_get_node_features(twitter_neighborhood, sample_nodes):
     actual = twitter_neighborhood.update_node_features(nodes=sample_nodes)
     feature_fields = [
