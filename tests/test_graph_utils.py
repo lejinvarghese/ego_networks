@@ -20,33 +20,33 @@ def get_sample_graph(graph_type):
         return margulis_gabber_galil_graph(n=20)
 
 @patch('matplotlib.pyplot.show')
-def test_plot_directed(mock_fig):
+def test_plot_directed(mock_plot):
     graph = get_sample_graph(graph_type="directed")
     draw_nx_graph(graph)
 
 @patch('matplotlib.pyplot.show')
-def test_plot_undirected(mock_fig):
+def test_plot_undirected(mock_plot):
     graph = get_sample_graph(graph_type="undirected")
     draw_nx_graph(graph)
 
 @patch('matplotlib.pyplot.show')
-def test_plot_cyclic(mock_fig):
+def test_plot_cyclic(mock_plot):
     graph = get_sample_graph(graph_type="cyclic")
     draw_nx_graph(graph)
 
 @patch('matplotlib.pyplot.show')
-def test_plot_multigraph(mock_fig):
+def test_plot_multigraph(mock_plot):
     graph = get_sample_graph(graph_type="multigraph")
     draw_nx_graph(graph)
 
 @patch('matplotlib.pyplot.show')
-def test_plot_cyclic_invalid_style(mock_fig):
+def test_plot_cyclic_invalid_style(mock_plot):
     graph = get_sample_graph(graph_type="cyclic")
     with pytest.raises(ValueError):
         draw_nx_graph(graph, arrowstyle="wedge")
 
 @patch('matplotlib.pyplot.show')
-def test_plot_cyclic_invalid_values(mock_fig):
+def test_plot_cyclic_invalid_values(mock_plot):
     graph = get_sample_graph(graph_type="undirected")
     with pytest.raises(ValueError):
         draw_nx_graph(graph, font_size="x")
