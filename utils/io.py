@@ -50,7 +50,6 @@ class DataReader(DataConfig):
             logger.error(f"Read unsuccessful: {self.data_type}, {error}")
             return pd.DataFrame()
 
-
     def __preprocess(self, data):
         if self.data_type == "ties":
             data.following = data.following.apply(ast.literal_eval)

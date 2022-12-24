@@ -128,27 +128,23 @@ def main():
         "game theory",
     ]
 
-    # models = [
-    #     "https://tfhub.dev/google/universal-sentence-encoder-large/5",
-    # ]
-    # print(f"Sample tokens: {tokens[:5]}, Total tokens: {len(tokens)}")
+    models = [
+        "https://tfhub.dev/google/universal-sentence-encoder-large/5",
+    ]
+    print(f"Sample tokens: {tokens[:5]}, Total tokens: {len(tokens)}")
 
-    # embeddings = get_embeddings(models[0], tokens)
+    embeddings = get_embeddings(models[0], tokens)
 
-    # similar_tokens = get_similarities(embeddings, tokens)
-    # similar_tokens.rename(
-    #     columns={
-    #         "ref_item": "source",
-    #         "comp_item": "target",
-    #         "sim_score": "weight",
-    #     },
-    #     inplace=True,
-    # )
-    # print(similar_tokens.head(10))
-
-    # similar_tokens.to_csv("similar_tokens.csv", index=False)
-
-    similar_tokens = pd.read_csv("similar_tokens.csv")
+    similar_tokens = get_similarities(embeddings, tokens)
+    similar_tokens.rename(
+        columns={
+            "ref_item": "source",
+            "comp_item": "target",
+            "sim_score": "weight",
+        },
+        inplace=True,
+    )
+    print(similar_tokens.head(10))
 
     G = nx.from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
 
@@ -166,22 +162,8 @@ def main():
         width=edge_sizes,
         save=True,
         file_path=f"{FILE_DIRECTORY}/figure.png",
-        random_state=34,  # 49
+        random_state=34,
     )
-
-    # pos = nx.spring_layout(G, seed=100)
-    # nx.draw(
-    #     G,
-    #     with_labels=True,
-    #     pos=pos,
-    #     node_color=list(color_map.values()),
-    #     font_weight="bold",
-    #     # edge_color=color_map,
-    #     # node_size=color_map,
-    # )
-    # plt.savefig("output_x.png", format="PNG")
-    # fig.write_html("domains/output_x.html")
-    # fig.write_image("domains/output_x.png", scale=3.0)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,9 @@ def get_graph_properties(graph, random_state=34):
     community_colors = {
         communities.get(k): v for k, v in community_center_colors.items()
     }
-    node_colors = [community_colors.get(v) for k, v in communities.items()]
+    node_colors = [
+        community_colors.get(v, "lightgrey") for k, v in communities.items()
+    ]
 
     node_centrality = betweenness_centrality(
         graph,
@@ -31,10 +33,14 @@ def get_graph_properties(graph, random_state=34):
     for e in graph.edges():
         u, v = e
         if communities.get(u) == communities.get(v):
-            edge_colors.append(community_colors.get(communities.get(u)))
+            edge_colors.append(
+                community_colors.get(communities.get(u), "lightgrey")
+            )
         else:
             edge_colors.append("lightgrey")
 
-    edge_sizes = [i*1e1 for i in get_edge_attributes(graph, "weight").values()]
+    edge_sizes = [
+        i * 1e1 for i in get_edge_attributes(graph, "weight").values()
+    ]
 
     return node_colors, node_sizes, edge_colors, edge_sizes

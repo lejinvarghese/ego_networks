@@ -95,7 +95,9 @@ class HomogenousEgoNetwork(EgoNetwork):
             calculate_edges=calculate_edges,
         )
         if cache:
-            writer = DataWriter(data=measures.node_measures, data_type="node_measures")
+            writer = DataWriter(
+                data=measures.node_measures, data_type="node_measures"
+            )
             writer.run(append=False)
         return measures
 
