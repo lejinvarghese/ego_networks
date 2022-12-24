@@ -60,6 +60,7 @@ def sample_knowledge_graph():
 def get_node_labels(graph):
     return {node: node for node in graph.nodes()}
 
+
 def wrap_node_labels(node_labels, width, break_long_words=False):
     from textwrap import fill
 
@@ -101,7 +102,7 @@ def draw_nx_graph(graph, **kwargs):
         font_color=kwargs.get("node_label_font_color", "whitesmoke"),
         font_size=kwargs.get("font_size", 12),
         labels=wrap_node_labels(
-            kwargs.get("node_labels", get_node_labels(graph)), 12
+            kwargs.get("node_labels", get_node_labels(graph)), 10
         ),
         verticalalignment=kwargs.get("verticalalignment", "center_baseline"),
     )
@@ -114,19 +115,26 @@ def draw_nx_graph(graph, **kwargs):
         arrowstyle=kwargs.get("arrowstyle", "-|>"),
         connectionstyle=kwargs.get("connectionstyle", "arc3, rad = 0.05"),
     )
-    nx.draw_networkx_edge_labels(
-        graph,
-        pos,
-        bbox=kwargs.get("edge_bbox", dict(alpha=0.0, lw=0)),
-        edge_labels=kwargs.get("edge_labels"),
-        font_color=kwargs.get("edge_label_font_color", "tomato"),
-        font_size=int(kwargs.get("font_size", 12) * 0.7),
-    )
+    if kwargs.get("edge_labels"):
+        nx.draw_networkx_edge_labels(
+            graph,
+            pos,
+            bbox=kwargs.get("edge_bbox", dict(alpha=0.0, lw=0)),
+            edge_labels=kwargs.get("edge_labels"),
+            font_color=kwargs.get("edge_label_font_color", "tomato"),
+            font_size=int(kwargs.get("font_size", 12) * 0.7),
+        )
     fig.patch.set_facecolor(kwargs.get("background_color", "whitesmoke"))
     fig.patch.set_alpha(kwargs.get("background_alpha", 0.8))
     ax.set_facecolor(kwargs.get("background_color", "whitesmoke"))
     ax.axis(kwargs.get("axis", "off"))
-    plt.show()
+    if kwargs.get("save"):
+        fig.savefig(
+            kwargs.get("file_path", "figure.png"),
+            facecolor=fig.get_facecolor(),
+            edgecolor="none",
+        )
+    fig.show()
 
 
 def brokerage(graph, k=100, seed=42):

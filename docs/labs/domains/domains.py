@@ -2,36 +2,38 @@
 import os
 import sys
 
-PATH = os.path.abspath(".")
+ROOT_DIRECTORY = os.path.abspath(".")
 os.environ["KMP_WARNINGS"] = "FALSE"
-sys.path.insert(1, PATH)
+sys.path.insert(1, ROOT_DIRECTORY)
 
 from warnings import filterwarnings
 
-import community as community_louvain
-import networkx as nx
+from networkx import from_pandas_edgelist
 import numpy as np
 import pandas as pd
-import tensorflow as tf
-import tensorflow_hub as hub
+from tensorflow import get_logger as tf_get_logger
+from tensorflow_hub import load as hub_load
 from faiss import IndexFlatL2, get_num_gpus, index_cpu_to_all_gpus
 
-from utils import draw_graph_interactive, timer
+try:
+    from utils.graph import draw_nx_graph
+    from docs.labs.domains.properties import get_graph_properties
+except ModuleNotFoundError:
+    from ego_networks.utils.graph import draw_nx_graph
+    from ego_networks.docs.labs.domains.properties import get_graph_properties
 
-tf.get_logger().setLevel("ERROR")
+tf_get_logger().setLevel("ERROR")
 filterwarnings("ignore")
+FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
-N_GPU = get_num_gpus()
-print(f"Number of GPUs: {N_GPU}")
+print(f"number of gpus >> {get_num_gpus()}")
 
 
-@timer
 def get_embeddings(model, tokens):
-    embeddings = np.array(hub.load(model)(tokens))
+    embeddings = np.array(hub_load(model)(tokens))
     return embeddings
 
 
-@timer
 def get_similarities(embeddings, tokens):
     cpu_index = IndexFlatL2(embeddings.shape[1])
     gpu_index = index_cpu_to_all_gpus(cpu_index)
@@ -84,7 +86,7 @@ def get_similarities(embeddings, tokens):
     return similar_tokens
 
 
-if __name__ == "__main__":
+def main():
     tokens = [
         "complexity theory",
         "reinforcement learning",
@@ -124,11 +126,10 @@ if __name__ == "__main__":
         "robotics",
         "game theory",
     ]
+
     models = [
         "https://tfhub.dev/google/universal-sentence-encoder-large/5",
     ]
-    results = []
-
     print(f"Sample tokens: {tokens[:5]}, Total tokens: {len(tokens)}")
 
     embeddings = get_embeddings(models[0], tokens)
@@ -144,16 +145,25 @@ if __name__ == "__main__":
     )
     print(similar_tokens.head(10))
 
-    G = nx.from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
+    G = from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
 
-    size_map = nx.betweenness_centrality(
-        G, weight="weight", normalized=True, endpoints=True, seed=42
+    node_colors, node_sizes, edge_colors, edge_sizes = get_graph_properties(G)
+
+    draw_nx_graph(
+        G,
+        node_color=node_colors,
+        node_size=node_sizes,
+        font_size=14,
+        node_label_font_color="black",
+        edge_colors=edge_colors,
+        dpi=240,
+        figsize=(40, 40),
+        width=edge_sizes,
+        save=True,
+        file_path=f"{FILE_DIRECTORY}/figure.png",
+        random_state=34,
     )
 
-    color_map = community_louvain.best_partition(G, resolution=0.5)
 
-    fig = draw_graph_interactive(
-        G, color_map=color_map, size_map=size_map, title=" "
-    )
-    fig.write_html("domains/output.html")
-    fig.write_image("domains/output.png", scale=3.0)
+if __name__ == "__main__":
+    main()
