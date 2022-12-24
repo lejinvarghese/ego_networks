@@ -1,15 +1,17 @@
 def get_graph_properties(graph, random_state=34):
     from community import best_partition
-    from networkx import betweenness_centrality, get_edge_attributes
+    from networkx import get_edge_attributes, betweenness_centrality
 
-    communities = best_partition(graph, resolution=0.8, random_state=42)
+    communities = best_partition(graph, resolution=0.7, random_state=random_state)
 
     community_center_colors = {
         "Smart Cities": "mediumseagreen",
         "Intelligence": "gold",
         "Robotics": "cornflowerblue",
-        "Machine Learning": "tomato",
-        "Complexity Theory": "mediumpurple",
+        "Machine Learning": "deepskyblue",
+        "Evolutionary Theory": "mediumpurple",
+        "Network Science": "hotpink",
+        "Recommender Systems": "lightcoral",
         "Marketing": "palevioletred",
     }
 

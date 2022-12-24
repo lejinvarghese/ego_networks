@@ -79,7 +79,7 @@ def get_similarities(embeddings, tokens):
     similar_tokens["sim_score"] = (
         similar_tokens["sim_score"]
         + abs(similar_tokens["sim_score"].min())
-        + 0.001
+        + 0.1
     )
     similar_tokens.drop(columns=["sim_score_min", "sim_rank"], inplace=True)
 
@@ -125,6 +125,11 @@ def main():
         "politics",
         "robotics",
         "game theory",
+        "autonomous vehicles",
+        "network dynamics",
+        "system design",
+        "information diffusion",
+        "adaptive intelligent systems",
     ]
 
     models = [
@@ -155,13 +160,14 @@ def main():
         node_size=node_sizes,
         font_size=14,
         node_label_font_color="black",
+        alpha=0.8,
         edge_colors=edge_colors,
         dpi=240,
         figsize=(40, 40),
         width=edge_sizes,
         save=True,
         file_path=f"{FILE_DIRECTORY}/figure.png",
-        random_state=34,
+        random_state=62,
     )
 
 
