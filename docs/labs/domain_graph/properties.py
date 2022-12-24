@@ -3,6 +3,7 @@
 from community import best_partition
 from networkx import Graph, get_edge_attributes, betweenness_centrality
 
+
 class GraphProperties:
     def __init__(
         self,

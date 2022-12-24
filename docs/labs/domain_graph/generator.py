@@ -7,9 +7,6 @@ import pandas as pd
 from networkx import Graph, from_pandas_edgelist
 from tensorflow_hub import load as hub_load
 
-# from tensorflow import get_logger as tf_get_logger
-
-# tf_get_logger().setLevel("ERROR")
 filterwarnings("ignore")
 
 
@@ -64,40 +61,43 @@ class DomainGraph:
         similar_tokens.sort_values(
             by=["source", "_rank"], ascending=True, inplace=True
         )
-        return similar_tokens[similar_tokens.sim_rank > 0]
+        return similar_tokens[similar_tokens._rank > 0]
 
     def __create_edges(self):
         domain_embeddings = self.__get_embeddings(tokens=self.nodes)
         similar_tokens = self.__get_similarities(
             embeddings=domain_embeddings, tokens=self.nodes
         )
-        similar_tokens["sim_score_min"] = similar_tokens.groupby("source")[
-            "sim_score"
+        similar_tokens["_min_score"] = similar_tokens.groupby("source")[
+            "_score"
         ].transform("min")
         similar_tokens = similar_tokens[
-            (similar_tokens.sim_score_min >= -0.15)
-            | (similar_tokens.sim_rank <= 2)
+            (similar_tokens._min_score >= -0.15) | (similar_tokens._rank <= 2)
         ]
-        similar_tokens["sim_score"] = (
-            similar_tokens["sim_score"]
-            + abs(similar_tokens["sim_score"].min())
-            + 0.1
+        similar_tokens["_score"] = (
+            similar_tokens["_score"] + abs(similar_tokens["_score"].min()) + 0.1
         )
-        similar_tokens.drop(columns=["sim_score_min", "sim_rank"], inplace=True)
+        similar_tokens.drop(columns=["_min_score", "_rank"], inplace=True)
         similar_tokens.rename(
             columns={
-                "sim_score": "weight",
+                "_score": "weight",
             },
             inplace=True,
         )
 
         return similar_tokens
 
-    def create(self) -> Graph:
+    def create_graph(self) -> Graph:
 
         edges = self.__create_edges()
         print(edges.head(10))
         return from_pandas_edgelist(edges)
 
     def get_diffusion_grades(self, content):
-        return {"Smart Cities": 2, "Intelligence": 4, "Robotics": 6}
+        return {
+            "Smart Cities": 2,
+            "Intelligence": 4,
+            "Robotics": 6,
+            "Aesthetics": 8,
+            "Sustainability": 10,
+        }
