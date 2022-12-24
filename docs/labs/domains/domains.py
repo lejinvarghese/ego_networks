@@ -17,10 +17,12 @@ from faiss import IndexFlatL2, get_num_gpus, index_cpu_to_all_gpus
 
 try:
     from utils.graph import draw_nx_graph
-    from docs.labs.domains.properties import get_graph_properties
+    from docs.labs.domains.properties import (
+        GraphProperties,
+    )  # get_graph_properties
 except ModuleNotFoundError:
     from ego_networks.utils.graph import draw_nx_graph
-    from ego_networks.docs.labs.domains.properties import get_graph_properties
+    from ego_networks.docs.labs.domains.properties import GraphProperties
 
 tf_get_logger().setLevel("ERROR")
 filterwarnings("ignore")
@@ -152,12 +154,21 @@ def main():
 
     G = from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
 
-    node_colors, node_sizes, edge_colors, edge_sizes = get_graph_properties(G)
+    (
+        node_colors,
+        node_sizes,
+        edge_colors,
+        edge_sizes,
+        line_widths,
+        line_colors,
+    ) = GraphProperties(G).create()
 
     draw_nx_graph(
         G,
         node_color=node_colors,
         node_size=node_sizes,
+        line_widths=line_widths,
+        line_colors=line_colors,
         font_size=14,
         node_label_font_color="black",
         alpha=0.8,
