@@ -2,13 +2,12 @@
 import os
 import sys
 
-PATH = os.path.abspath(".")
+ROOT_DIRECTORY = os.path.abspath(".")
 os.environ["KMP_WARNINGS"] = "FALSE"
-sys.path.insert(1, PATH)
+sys.path.insert(1, ROOT_DIRECTORY)
 
 from warnings import filterwarnings
 
-# import community as community_louvain
 import networkx as nx
 from matplotlib import pyplot as plt
 import numpy as np
@@ -26,6 +25,7 @@ except ModuleNotFoundError:
 
 tf.get_logger().setLevel("ERROR")
 filterwarnings("ignore")
+FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 print(f"number of gpus >> {get_num_gpus()}")
 
@@ -154,18 +154,18 @@ def main():
 
     node_colors, node_sizes, edge_colors, edge_sizes = get_graph_properties(G)
 
-
     draw_nx_graph(
         G,
         node_color=node_colors,
         node_size=node_sizes,
         font_size=14,
         node_label_font_color="black",
-        edge_colors=edge_colors,#"dimgrey",
+        edge_colors=edge_colors,
         dpi=240,
         figsize=(40, 40),
         width=edge_sizes,
         save=True,
+        file_path=f"{FILE_DIRECTORY}/figure.png",
         random_state=34,  # 49
     )
 
