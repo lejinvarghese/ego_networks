@@ -8,12 +8,11 @@ sys.path.insert(1, ROOT_DIRECTORY)
 
 from warnings import filterwarnings
 
-import networkx as nx
-from matplotlib import pyplot as plt
+from networkx import from_pandas_edgelist
 import numpy as np
 import pandas as pd
-import tensorflow as tf
-import tensorflow_hub as hub
+from tensorflow import get_logger as tf_get_logger
+from tensorflow_hub import load as hub_load
 from faiss import IndexFlatL2, get_num_gpus, index_cpu_to_all_gpus
 
 try:
@@ -23,7 +22,7 @@ except ModuleNotFoundError:
     from ego_networks.utils.graph import draw_nx_graph
     from ego_networks.docs.labs.domains.properties import get_graph_properties
 
-tf.get_logger().setLevel("ERROR")
+tf_get_logger().setLevel("ERROR")
 filterwarnings("ignore")
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
@@ -31,7 +30,7 @@ print(f"number of gpus >> {get_num_gpus()}")
 
 
 def get_embeddings(model, tokens):
-    embeddings = np.array(hub.load(model)(tokens))
+    embeddings = np.array(hub_load(model)(tokens))
     return embeddings
 
 
@@ -146,7 +145,7 @@ def main():
     )
     print(similar_tokens.head(10))
 
-    G = nx.from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
+    G = from_pandas_edgelist(similar_tokens, "source", "target", ["weight"])
 
     node_colors, node_sizes, edge_colors, edge_sizes = get_graph_properties(G)
 
