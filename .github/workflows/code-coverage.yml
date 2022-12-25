@@ -20,6 +20,8 @@ jobs:
             - name: Run tests and generate test coverage report
               env:
                   TWITTER_API_BEARER_TOKEN: ${{ secrets.TWITTER_API_BEARER_TOKEN }}
+                  TWITTER_FOCAL_NODE_ID: ${{ secrets.TWITTER_FOCAL_NODE_ID }}
+                  GOODREADS_FOCAL_NODE_ID: ${{ secrets.GOODREADS_FOCAL_NODE_ID }}
                   CLOUD_STORAGE_BUCKET: ${{ secrets.CLOUD_STORAGE_BUCKET }}
               run: |
                   pytest --cov=./src --cov-report=xml
