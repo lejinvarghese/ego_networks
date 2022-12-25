@@ -16,7 +16,6 @@ load_dotenv()
 filterwarnings("ignore")
 logger = CustomLogger(__name__)
 
-TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
 
 

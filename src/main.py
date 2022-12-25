@@ -20,7 +20,7 @@ logger = CustomLogger(__name__)
 
 TWITTER_USERNAME = os.getenv("TWITTER_USERNAME")
 TWITTER_API_BEARER_TOKEN = os.getenv("TWITTER_API_BEARER_TOKEN")
-INTEGRATED_FOCAL_NODE_ID = os.getenv("INTEGRATED_FOCAL_NODE_ID")
+TWITTER_FOCAL_NODE_ID = os.getenv("TWITTER_FOCAL_NODE_ID")
 CLOUD_STORAGE_BUCKET = os.getenv("CLOUD_STORAGE_BUCKET")
 MAX_RADIUS = 2
 
@@ -41,7 +41,7 @@ def main(
         twitter_hood.update_neighborhood(mode="append")
 
     network = HomogenousEgoNetwork(
-        focal_node_id=INTEGRATED_FOCAL_NODE_ID,
+        focal_node_id=TWITTER_FOCAL_NODE_ID,
         radius=MAX_RADIUS,
     )
 

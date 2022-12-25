@@ -91,10 +91,11 @@ def draw_nx_graph(graph, **kwargs):
     nx.draw_networkx_nodes(
         graph,
         pos=pos,
-        linewidths=kwargs.get("linewidths", 1),
         node_size=kwargs.get("node_size", 3500),
         node_color=kwargs.get("node_color", "dimgrey"),
         alpha=kwargs.get("alpha", 0.9),
+        linewidths=kwargs.get("line_widths", 1),
+        edgecolors=kwargs.get("line_colors"),
     )
     nx.draw_networkx_labels(
         graph,
