@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-
 import pytest
 from pandas import DataFrame
 
@@ -13,11 +11,7 @@ except ModuleNotFoundError:
     )
     from ego_networks.utils.api.goodreads import get_shelf_data
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-GOODREADS_FOCAL_NODE_ID = os.getenv("GOODREADS_FOCAL_NODE_ID")
+GOODREADS_FOCAL_NODE_ID = 1
 MAX_RADIUS = 1
 sample_shelves = ["currently-reading", "to-read"]
 
@@ -37,6 +31,7 @@ def sample_shelf_data():
             "title": ["xyz", "xxz"],
             "author": ["a", "b"],
             "date": ["2022-01-01", "2020-01-02"],
+            "desc": ["dd", "d"],
             "shelf": ["currently-reading", "to-read"],
         }
     )
@@ -50,6 +45,7 @@ def test_get_shelf_data():
         "title",
         "author",
         "date",
+        "desc",
         "shelf",
     ]
 
@@ -69,6 +65,7 @@ def test_update_neighborhood(goodreads_neighborhood):
         "title",
         "author",
         "date",
+        "desc",
         "shelf",
     ]
     expected_tie_fields = ["source", "target", "weight"]
