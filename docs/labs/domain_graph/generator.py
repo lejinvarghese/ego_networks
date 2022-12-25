@@ -25,7 +25,10 @@ class DomainGraph:
     ) -> pd.DataFrame:
         from faiss import IndexFlatL2, get_num_gpus, index_cpu_to_all_gpus
 
-        print(f"number of gpus >> {get_num_gpus()}")
+        if get_num_gpus() == 0:
+            raise ValueError(
+                "No GPUs found. GPU index cannot be used in this instance."
+            )
 
         cpu_index = IndexFlatL2(embeddings.shape[1])
         gpu_index = index_cpu_to_all_gpus(cpu_index)
@@ -43,7 +46,7 @@ class DomainGraph:
             columns=["score_" + str(i) for i in range(max_edges + 1)],
             index=tokens,
         )
-        similar_tokens = I.applymap(lambda x: tokens[x].title()).melt(
+        similar_tokens = I.applymap(lambda x: tokens[x]).melt(
             id_vars=["item_0"]
         )
         similar_scores = D.applymap(lambda x: np.round(1 - x, 4)).melt(
@@ -84,20 +87,38 @@ class DomainGraph:
             },
             inplace=True,
         )
-
+        cols = ["source", "target"]
+        similar_tokens[cols] = similar_tokens[cols].applymap(
+            lambda x: x.title()
+        )
         return similar_tokens
 
     def create_graph(self) -> Graph:
 
         edges = self.__create_edges()
-        print(edges.head(10))
         return from_pandas_edgelist(edges)
 
     def get_diffusion_grades(self, content):
-        return {
-            "Smart Cities": 2,
-            "Intelligence": 4,
-            "Robotics": 6,
-            "Aesthetics": 8,
-            "Sustainability": 10,
-        }
+        tokens = [*self.nodes, *content]
+
+        embeddings = self.__get_embeddings(tokens=tokens)
+        similar_tokens = self.__get_similarities(
+            embeddings=embeddings, tokens=tokens, max_edges=len(tokens)
+        )
+        similar_tokens = similar_tokens[
+            (similar_tokens.source.isin(self.nodes))
+        ]
+        similar_tokens = similar_tokens[
+            (similar_tokens.target.isin(content))
+        ].sort_values(by=["_score"], ascending=False)
+        similar_tokens = similar_tokens[(similar_tokens._score >= -0.50)]
+        similar_tokens["_score"] = (
+            similar_tokens["_score"] + abs(similar_tokens["_score"].min()) + 0.1
+        )
+        similar_tokens["source"] = similar_tokens["source"].apply(
+            lambda x: x.title()
+        )
+        similar_tokens = (
+            similar_tokens.groupby("source").target.count().to_dict()
+        )
+        return {k: 4 * v for k, v in similar_tokens.items()}

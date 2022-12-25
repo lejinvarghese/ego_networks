@@ -3,7 +3,6 @@ import os
 import sys
 
 ROOT_DIRECTORY = os.path.abspath(".")
-os.environ["KMP_WARNINGS"] = "FALSE"
 sys.path.insert(1, ROOT_DIRECTORY)
 
 from warnings import filterwarnings
@@ -22,6 +21,7 @@ except ModuleNotFoundError:
     from ego_networks.docs.labs.domain_graph.generator import DomainGraph
 
 filterwarnings("ignore")
+os.environ["KMP_WARNINGS"] = "FALSE"
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 
