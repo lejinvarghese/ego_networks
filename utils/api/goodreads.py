@@ -38,7 +38,7 @@ def get_book_description(title, author):
         )
         desc = items.description.iloc[0]
     except:
-        desc = " "
+        desc = ""
     return title.lower() + " " + re.sub(r"[^a-zA-Z0-9 \n\.]", " ", desc)
 
 

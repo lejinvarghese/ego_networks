@@ -50,7 +50,6 @@ def get_content():
                 "Spotify: Music genres and playlists",
                 "Reinforcement learning: Dynamic programming, Policy and Value Iteration",
             ]
-
     return [
         *get_books(year=2022),
         *get_courses(year=2022),
