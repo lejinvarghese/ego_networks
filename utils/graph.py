@@ -134,6 +134,7 @@ def draw_nx_graph(graph, **kwargs):
             kwargs.get("file_path", "figure.png"),
             facecolor=fig.get_facecolor(),
             edgecolor="none",
+            bbox_inches="tight",
         )
     fig.show()
 

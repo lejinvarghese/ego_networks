@@ -46,16 +46,16 @@ def main():
         node_size=node_sizes,
         line_widths=line_widths,
         line_colors=line_colors,
-        font_size=14,
+        font_size=16,
         node_label_font_color="black",
         alpha=0.8,
         edge_colors=edge_colors,
-        dpi=240,
+        dpi=180,
         figsize=(40, 40),
         width=edge_sizes,
         save=True,
         file_path=f"{FILE_DIRECTORY}/figure.png",
-        random_state=62,
+        random_state=10,
     )
 
 

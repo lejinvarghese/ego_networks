@@ -62,7 +62,7 @@ class GraphProperties:
                 edge_colors.append("lightgrey")
 
         edge_sizes = [
-            w * 1e1 for w in get_edge_attributes(self.graph, "weight").values()
+            w * 3e1 for w in get_edge_attributes(self.graph, "weight").values()
         ]
         return edge_colors, edge_sizes
 
