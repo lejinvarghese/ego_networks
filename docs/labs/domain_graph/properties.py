@@ -45,7 +45,7 @@ class GraphProperties:
             endpoints=True,
             seed=self.random_state,
         )
-        node_sizes = [5e4 * i for i in list(_node_centrality.values())]
+        node_sizes = [3e4 * i for i in list(_node_centrality.values())]
         return node_colors, node_sizes
 
     def __get_edge_properties(self) -> tuple:
