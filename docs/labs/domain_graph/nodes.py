@@ -19,7 +19,7 @@ def get_content():
                 focal_node=GOODREADS_FOCAL_NODE_ID, max_radius=1
             ).update_neighborhood()
             return node_features[node_features.date.dt.year == year][
-                "title"
+                "desc"
             ].tolist()
 
     def get_courses(year):
@@ -50,7 +50,6 @@ def get_content():
                 "Spotify: Music genres and playlists",
                 "Reinforcement learning: Dynamic programming, Policy and Value Iteration",
             ]
-
     return [
         *get_books(year=2022),
         *get_courses(year=2022),

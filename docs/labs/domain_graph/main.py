@@ -50,7 +50,7 @@ def main():
         node_label_font_color="black",
         alpha=0.8,
         edge_colors=edge_colors,
-        dpi=180,
+        dpi=200,
         figsize=(24, 24),
         width=edge_sizes,
         save=True,

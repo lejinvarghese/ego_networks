@@ -23,9 +23,9 @@ class GraphProperties:
             "Robotics": "cornflowerblue",
             "Machine Learning": "deepskyblue",
             "Evolutionary Theory": "mediumpurple",
-            "Network Science": "hotpink",
-            "Recommender Systems": "lightcoral",
-            "Marketing": "palevioletred",
+            "Network Science": "violet",
+            "Recommender Systems": "palevioletred",
+            "Marketing": "lightcoral",
         }
         self.community_colors = {
             self.communities.get(k): v
@@ -62,7 +62,7 @@ class GraphProperties:
                 edge_colors.append("lightgrey")
 
         edge_sizes = [
-            w * 3e1 for w in get_edge_attributes(self.graph, "weight").values()
+            w * 5e1 for w in get_edge_attributes(self.graph, "weight").values()
         ]
         return edge_colors, edge_sizes
 
