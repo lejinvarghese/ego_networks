@@ -29,14 +29,6 @@ def sample_targets():
     return {str(i): "name" + "_" + str(i) for i in range(n_samples // 2)}
 
 
-@pytest.fixture
-def sample_labels():
-    return {str(i): "name" + "_" + str(i) for i in range(n_samples)}
-
-
-@pytest.fixture
-def sample_profile_images():
-    return {str(i): DEFAULT_PROFILE_URL for i in range(n_samples)}
 
 
 def test_recommender_train(sample_measures):
@@ -62,19 +54,15 @@ def test_recommender_test(sample_measures, sample_targets):
 
 
 def test_recommender_recommendations(
-    sample_measures, sample_targets, sample_labels, sample_profile_images
+    sample_measures, sample_targets,
 ):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
     recommender.train(recommendation_strategy="diverse")
     (
-        recommended_profiles,
-        recommended_profile_images,
+        recommended_profile_ids
     ) = recommender.get_recommendations(
-        sample_targets, sample_labels, sample_profile_images, k=3
+        sample_targets, k=3
     )
-    assert recommended_profiles[0] == "name_99"
-    assert recommended_profiles[1] == "name_98"
-    assert recommended_profiles[2] == "name_97"
-    assert recommended_profile_images[0] == DEFAULT_PROFILE_URL
-    assert recommended_profile_images[1] == DEFAULT_PROFILE_URL
-    assert recommended_profile_images[2] == DEFAULT_PROFILE_URL
+    assert recommended_profile_ids[0] == "99"
+    assert recommended_profile_ids[1] == "98"
+    assert recommended_profile_ids[2] == "97"

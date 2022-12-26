@@ -27,10 +27,8 @@ class EgoNetworkRecommender(NetworkRecommender):
     def __init__(
         self,
         network_measures: pd.DataFrame = pd.DataFrame(),
-        max_radius: int = 2,
         use_cache: bool = False,
     ):
-        self._max_radius = max_radius
         self._use_cache = use_cache
 
         if self._use_cache:
@@ -56,9 +54,9 @@ class EgoNetworkRecommender(NetworkRecommender):
         self.__ranks = model.rank()
         return np.round(self.__ranks, 2)
 
-    def test(self, targets: dict, k: int = 100):
+    def test(self, targets: list, k: int = 100):
         predicted = set(self.__ranks.index.to_list()[:k])
-        actuals = set(list(targets.keys()))
+        actuals = set(targets)
         true_positive = predicted.intersection(actuals)
         precision_k = round(len(true_positive) / len(predicted), 2)
         recall_k = round(len(true_positive) / min(k, len(actuals)), 2)
@@ -66,16 +64,10 @@ class EgoNetworkRecommender(NetworkRecommender):
         logger.info(f"Recall @ k: {k}: {recall_k}")
         return precision_k, recall_k
 
-    def get_recommendations(
-        self, targets: dict, labels: dict, profile_images: dict, k: int = 10
-    ):
+    def get_recommendations(self, targets: list, k: int = 10):
         """
         Returns a list of recommendations for the focal node.
         """
         predicted = self.__ranks.index.to_list()
-        actuals = list(targets.keys())
-        recs = [labels.get(i) for i in predicted if i not in actuals][:k]
-        profiles = [
-            profile_images.get(i) for i in predicted if i not in actuals
-        ][:k]
-        return recs, profiles
+        actuals = targets
+        return [i for i in predicted if i not in actuals][:k]

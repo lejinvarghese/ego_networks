@@ -1,10 +1,10 @@
 import streamlit as st
 
 try:
-    from src.main import main as engine
+    from src.controller import Controller as engine
     from utils.api.twitter import get_twitter_profile_image
 except ModuleNotFoundError:
-    from ego_networks.src.main import main as engine
+    from ego_networks.src.controller import Controller as engine
     from ego_networks.utils.api.twitter import get_twitter_profile_image
 
 N_ROWS = 5
