@@ -1,17 +1,18 @@
 import streamlit as st
 
 try:
-    from src.controller import Controller as engine
+    from src.controller import Controller
     from utils.api.twitter import get_twitter_profile_image
 except ModuleNotFoundError:
-    from ego_networks.src.controller import Controller as engine
+    from ego_networks.src.controller import Controller
     from ego_networks.utils.api.twitter import get_twitter_profile_image
 
-N_ROWS = 5
-HEADER_IMAGE = "https://www.freepnglogos.com/uploads/twitter-logo-png/twitter-logo-vector-png-clipart-1.png"
+@st.cache
+def engine():
+    return Controller()
 
 
-def render_header(header_image):
+def render_header():
     st.title("Recommendations from your Ego Network")
     """
     Generates recommendations from the Twitter Ego Network.
@@ -20,7 +21,7 @@ def render_header(header_image):
         st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
     st.image(
-        image=header_image,
+        image="https://www.freepnglogos.com/uploads/twitter-logo-png/twitter-logo-vector-png-clipart-1.png",
         width=50,
     )
 
@@ -70,19 +71,27 @@ def render_recommendations(
     recommendation_strategy,
 ):
     with st.spinner("Wait for it..."):
-        recommended_profiles, recommended_profile_images = engine(
-            k=n_recommendations,
-            update_neighborhood=update_neighborhood,
-            update_measures=update_measures,
+        if update_neighborhood:
+            st.write("Updating neighborhood...")
+            engine.update_neighborhood()
+        if update_measures:
+            st.write("Updating measures...")
+            engine.update_measures()
+        (
+            recommended_profile_names,
+            recommended_profile_images,
+        ) = engine.update_recommendations(
             recommendation_strategy=recommendation_strategy,
+            n_recommendations=n_recommendations,
         )
 
     st.title("**Recommendations**")
-    n_cols = len(recommended_profiles) // N_ROWS
+    n_rows = 5
+    n_cols = len(recommended_profile_names) // n_rows
     cols = st.columns(n_cols)
 
     for idx, rec in enumerate(
-        zip(recommended_profiles, recommended_profile_images)
+        zip(recommended_profile_names, recommended_profile_images)
     ):
         user_name, profile_image = rec[0], rec[1]
         profile_image = get_twitter_profile_image(user_name, profile_image)
@@ -96,7 +105,7 @@ def render_recommendations(
 
 def main():
     st.set_page_config(layout="wide")
-    render_header(header_image=HEADER_IMAGE)
+    render_header()
 
     (
         n_recommendations,
