@@ -28,13 +28,6 @@ class Configuration:
 
 class Controller(Configuration):
     def __init__(self):
-        self.neighborhoods = [
-            TwitterEgoNeighborhood(
-                focal_node=self.twitter_username,
-                max_radius=self.max_radius,
-                api_bearer_token=self.twitter_api_bearer_token,
-            )
-        ]
         self.network = HomogenousEgoNetwork(
             focal_node_id=self.twitter_focal_node_id,
             radius=self.max_radius,
@@ -42,7 +35,14 @@ class Controller(Configuration):
         self.recommender = EgoNetworkRecommender(use_cache=True)
 
     def update_neighborhood(self, mode: str = "append"):
-        for n in self.neighborhoods:
+        _neighborhoods = [
+            TwitterEgoNeighborhood(
+                focal_node=self.twitter_username,
+                max_radius=self.max_radius,
+                api_bearer_token=self.twitter_api_bearer_token,
+            )
+        ]
+        for n in _neighborhoods:
             n.update_neighborhood(mode=mode)
 
         self.network = HomogenousEgoNetwork(

@@ -42,14 +42,17 @@ class EgoNetworkRecommender(NetworkRecommender):
             )
 
     def train(self, recommendation_strategy):
-
+        logger.info(
+            f"Generating recommendations using strategy: {recommendation_strategy}"
+        )
         measures = self.network_measures.pivot(
             index="node", columns="measure_name"
         )
         measures["measure_value"] = measures["measure_value"].fillna(value=0)
         measures.columns = measures.columns.get_level_values(1)
         model = WeightedMeasures(
-            data=measures, recommendation_strategy=recommendation_strategy
+            recommendation_strategy=recommendation_strategy,
+            data=measures,
         )
         self.__ranks = model.rank()
         return np.round(self.__ranks, 2)
@@ -68,6 +71,9 @@ class EgoNetworkRecommender(NetworkRecommender):
         """
         Returns a list of recommendations for the focal node.
         """
+        logger.info(
+            f"Retrieving top {k} recommendations:"
+        )
         predicted = self.__ranks.index.to_list()
         actuals = targets
         return [i for i in predicted if i not in actuals][:k]

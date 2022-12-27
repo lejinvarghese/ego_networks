@@ -7,7 +7,8 @@ except ModuleNotFoundError:
     from ego_networks.src.controller import Controller
     from ego_networks.utils.api.twitter import get_twitter_profile_image
 
-@st.cache
+
+@st.cache(allow_output_mutation=True, persist=True, hash_funcs={Controller: id})
 def engine():
     return Controller()
 
@@ -56,31 +57,29 @@ def render_sidebar():
         )
         run = st.button("Run")
         return (
-            n_recommendations,
             update_neighborhood,
             update_measures,
             recommendation_strategy.lower(),
+            n_recommendations,
             run,
         )
 
 
 def render_recommendations(
-    n_recommendations,
     update_neighborhood,
     update_measures,
     recommendation_strategy,
+    n_recommendations,
 ):
-    with st.spinner("Wait for it..."):
+    with st.spinner("Please wait"):
         if update_neighborhood:
-            st.write("Updating neighborhood...")
-            engine.update_neighborhood()
+            engine().update_neighborhood()
         if update_measures:
-            st.write("Updating measures...")
-            engine.update_measures()
+            engine().update_measures()
         (
             recommended_profile_names,
             recommended_profile_images,
-        ) = engine.update_recommendations(
+        ) = engine().update_recommendations(
             recommendation_strategy=recommendation_strategy,
             n_recommendations=n_recommendations,
         )
@@ -108,19 +107,19 @@ def main():
     render_header()
 
     (
-        n_recommendations,
         update_neighborhood,
         update_measures,
         recommendation_strategy,
+        n_recommendations,
         run,
     ) = render_sidebar()
 
     if run:
         render_recommendations(
-            n_recommendations,
             update_neighborhood,
             update_measures,
             recommendation_strategy,
+            n_recommendations,
         )
 
 
