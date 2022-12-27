@@ -24,11 +24,11 @@ class WeightedMeasures:
 
     def __init__(
         self,
+        recommendation_strategy,
         data: pd.DataFrame = pd.DataFrame(),
-        recommendation_strategy: str = "diverse",
     ):
         self._data = data
-        self._weights = weights.get(recommendation_strategy)
+        self._weights = weights.get(recommendation_strategy, "connectors")
 
     def rank(self):
         X = self._data.copy()

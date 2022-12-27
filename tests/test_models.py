@@ -27,7 +27,7 @@ def sample_data():
 
 @pytest.fixture
 def sample_weighted_measures(sample_data):
-    return WeightedMeasures(sample_data)
+    return WeightedMeasures(recommendation_strategy="diverse", data=sample_data)
 
 
 @pytest.fixture
