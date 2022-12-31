@@ -26,7 +26,7 @@ class CustomFormatter(logging.Formatter):
 
 
 class CustomLogger(logging.Logger):
-    def __init__(self, name, level=logging.INFO):
+    def __init__(self, name, level=logging.DEBUG):
         logging.Logger.__init__(self, name, level)
 
         # create console handler with a higher log level

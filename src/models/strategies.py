@@ -7,9 +7,9 @@ weights = {
     },
     "connectors": {
         "degree_centrality": -2,
-        "pagerank": 3,
+        "betweenness_centrality": 5,
         "closeness_centrality": 8,
-        "betweenness_centrality": 10,
+        "brokerage": 10,
         "hubs": 10,
     },
     "influencers": {

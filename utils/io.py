@@ -27,6 +27,7 @@ class DataConfig:
     file_paths = {
         "ties": f"{root_dir}/ties",
         "node_features": f"{root_dir}/features/node",
+        "tie_features": f"{root_dir}/features/ties",
         "node_measures": f"{root_dir}/measures/node",
     }
 
@@ -42,7 +43,7 @@ class DataReader(DataConfig):
                 urlpath=f"{self.file_paths.get(self.data_type)}/*.csv",
                 dtype={"withheld": "object"},
             ).compute()
-            logger.info(
+            logger.debug(
                 f"Read successful: {self.data_type}, shape: {data.shape}"
             )
             return self.__preprocess(data)
@@ -61,6 +62,24 @@ class DataReader(DataConfig):
                 .set_index("id")
                 .drop(columns="witheld", errors="ignore")
             )
+        elif self.data_type == "tie_features":
+            data = data.rename(
+                columns={
+                    "user_id": "source",
+                    "in_reply_to_user_id": "target",
+                    "tweet_id": "weight",
+                }
+            )
+            data["source"] = data["source"].astype(int)
+            data["target"] = data["target"].fillna(0.0).astype(int)
+            data = (
+                data[(data.source != data.target) & (data.target != 0)]
+                .groupby(["source", "target"])
+                .weight.count()
+                .reset_index()
+            )
+            data["weight"] = data["weight"] + 1
+            return data
         else:
             return data
 
@@ -72,7 +91,7 @@ class DataWriter(DataConfig):
         self.data_type = data_type
 
     def run(self, append=True):
-        logger.info(f"Writing {self.data_type}: {self.data.shape}")
+        logger.debug(f"Writing {self.data_type}: {self.data.shape}")
 
         if append:
             run_time = datetime.today().strftime("%Y_%m_%d_%H_%M_%S")

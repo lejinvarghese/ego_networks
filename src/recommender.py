@@ -42,7 +42,7 @@ class EgoNetworkRecommender(NetworkRecommender):
             )
 
     def train(self, recommendation_strategy):
-        logger.info(
+        logger.debug(
             f"Generating recommendations using strategy: {recommendation_strategy}"
         )
         measures = self.network_measures.pivot(
@@ -71,7 +71,7 @@ class EgoNetworkRecommender(NetworkRecommender):
         """
         Returns a list of recommendations for the focal node.
         """
-        logger.info(
+        logger.debug(
             f"Retrieving top {k} recommendations:"
         )
         predicted = self.__ranks.index.to_list()

@@ -47,5 +47,6 @@ def test_node_measures(sample_graph):
             "pagerank",
             "hubs",
             "authorities",
+            "brokerage",
         ]
     )

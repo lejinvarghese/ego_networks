@@ -82,3 +82,29 @@ def get_user_profile_image(
         return image_url
     else:
         return default_image_url
+
+
+def get_engagement(
+    client,
+    user_id,
+    content_type="tweets",
+    tweet_fields=[
+        "context_annotations",
+        "in_reply_to_user_id",
+        "public_metrics",
+        "entities",
+        "created_at",
+    ],
+):
+    if content_type == "tweets":
+        return client.get_users_tweets(
+            id=user_id, tweet_fields=tweet_fields
+        ).data
+    elif content_type == "mentions":
+        return client.get_users_mentions(
+            id=user_id, tweet_fields=tweet_fields
+        ).data
+    elif content_type == "likes":
+        return client.get_liked_tweets(
+            id=user_id, tweet_fields=tweet_fields
+        ).data
