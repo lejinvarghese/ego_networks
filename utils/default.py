@@ -24,7 +24,7 @@ def split_into_batches(src_list: list, batch_size: int) -> list:
         for x in range(0, len(src_list), batch_size)
     ]
 
-    logger.info(f"Total batches: {len(batches)}, batch size: {len(batches[0])}")
+    logger.debug(f"Total batches: {len(batches)}, batch size: {len(batches[0])}")
     return batches
 
 

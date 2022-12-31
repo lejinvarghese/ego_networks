@@ -43,7 +43,7 @@ class GoodreadsEgoNeighborhood(EgoNeighborhood):
         return self._max_radius
 
     def update_neighborhood(self):
-        logger.info(
+        logger.debug(
             f"Retrieving Goodreads neighborhood for: {self._focal_node}"
         )
         node_features = self.update_node_features()

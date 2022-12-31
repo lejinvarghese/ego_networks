@@ -12,7 +12,12 @@ from dotenv import load_dotenv
 
 try:
     from src.core import EgoNeighborhood
-    from utils.api.twitter import authenticate, get_users, get_users_following
+    from utils.api.twitter import (
+        authenticate,
+        get_users,
+        get_users_following,
+        get_engagement,
+    )
     from utils.default import split_into_batches
     from utils.io import DataReader, DataWriter
     from utils.custom_logger import CustomLogger
@@ -22,6 +27,7 @@ except ModuleNotFoundError:
         authenticate,
         get_users,
         get_users_following,
+        get_engagement,
     )
     from ego_networks.utils.default import split_into_batches
     from ego_networks.utils.io import DataReader, DataWriter
@@ -52,7 +58,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             user_fields=["id"],
             user_names=[self._focal_node],
         )[0].id
-        self.alters = self.__instanstiate_alter_state()
+        self.alters = self.__instantiate_alter_state()
 
     @property
     def layer(self):
@@ -91,15 +97,15 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         Updates the neighborhood of the focal node
         """
         if mode == "append":
-            logger.info(
-                f"Appending to the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
+            logger.debug(
+                f"Appending to the ego neigborhood for {self.focal_node_id}, @max radius: {self.max_radius}"
             )
             new_ties, nodes = self.update_ties()
             if new_ties.shape[0] > 0:
                 writer = DataWriter(data=new_ties, data_type="ties")
                 writer.run(append=True)
             else:
-                logger.info("No new ties to append to the neighborhood")
+                logger.debug("No new ties to append to the neighborhood")
 
             new_node_features = self.update_node_features(nodes=nodes)
             if new_node_features.shape[0] > 0:
@@ -108,9 +114,19 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
                 )
                 writer.run(append=True)
             else:
-                logger.info(
+                logger.debug(
                     "No new node features to append to the neighborhood"
                 )
+
+            tie_features = self.update_tie_features()
+            if tie_features.shape[0] > 0:
+                writer = DataWriter(data=tie_features, data_type="tie_features")
+                writer.run(append=True)
+            else:
+                logger.debug(
+                    "No new tie features to append to the neighborhood"
+                )
+
         elif mode == "delete":
             logger.warning(
                 f"Deleting stale ties in the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
@@ -121,7 +137,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
                 writer = DataWriter(data=cleansed_ties, data_type="ties")
                 writer.run(append=False)
             else:
-                logger.info("No new ties to delete from the neighborhood")
+                logger.debug("No new ties to delete from the neighborhood")
 
             if cleansed_node_features.shape[0] > 0:
                 writer = DataWriter(
@@ -129,11 +145,12 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
                 )
                 writer.run(append=False)
             else:
-                logger.info(
+                logger.debug(
                     "No new node features to delete from the neighborhood"
                 )
 
     def update_ties(self):
+        logger.debug(f"Updating ties")
 
         # get new ties, or new edges
         new_ties = [
@@ -162,10 +179,51 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         alters_all = {x for x in alters_all if x == x}
         return new_ties, alters_all
 
-    def update_tie_features(self):
-        pass
+    def update_tie_features(self, max_users=None, sleep_time=0.5):
+        logger.debug(f"Updating tie features")
+        tie_features = pd.DataFrame()
+        content_types = ["tweets", "mentions", "likes"]
+        user_ids = self.alters.get(1).get("current")
+        if max_users:
+            user_ids = set(list(user_ids)[:max_users])
+
+        for c in content_types:
+            time.sleep(sleep_time)
+            for i, user_id in enumerate(user_ids):
+                if i % 100 == 0:
+                    time.sleep(sleep_time * 10)
+                try:
+                    data = get_engagement(
+                        client=self.client, user_id=user_id, content_type=c
+                    )
+                    for d in data:
+                        tie_features = tie_features.append(
+                            {
+                                "user_id": user_id,
+                                "content": c,
+                                "timestamp": d.created_at,
+                                "tweet_id": d.id,
+                                "public_metrics": d.public_metrics,
+                                "in_reply_to_user_id": d.in_reply_to_user_id,
+                                "hashtags": [
+                                    h.get("tag")
+                                    for h in d.get("entities").get(
+                                        "hashtags", ()
+                                    )
+                                ],
+                                "context": [
+                                    t.get("entity", ()).get("name").lower()
+                                    for t in d.context_annotations
+                                ],
+                            },
+                            ignore_index=True,
+                        )
+                except:
+                    continue
+        return tie_features
 
     def update_node_features(self, nodes, sleep_time=0.1):
+        logger.debug(f"Updating node features")
         try:
             previous_nodes_with_features = set(
                 self.previous_node_features.index.unique()
@@ -181,7 +239,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         new_nodes.add(self.focal_node_id)
 
         logger.info(
-            f"All nodes within radius {self._max_radius}: {len(nodes)}, \nNew nodes: {len(new_nodes)}"
+            f"Nodes within radius {self._max_radius}: {len(nodes)}, new nodes: {len(new_nodes)}"
         )
 
         max_api_batch_size = 100
@@ -215,6 +273,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         return new_node_features
 
     def delete_ties(self):
+        logger.warning(f"Deleting ties and node features")
 
         # remove ties
         cleansed_ties = self.previous_ties[
@@ -247,7 +306,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         )
         return cleansed_ties, cleansed_node_features
 
-    def __instanstiate_alter_state(self):
+    def __instantiate_alter_state(self):
         alters = {
             i: {
                 "previous": set(),

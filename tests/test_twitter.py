@@ -6,13 +6,19 @@ from pandas import DataFrame
 
 try:
     from src.neighborhoods.twitter import TwitterEgoNeighborhood
-    from utils.api.twitter import authenticate, get_users, get_users_following
+    from utils.api.twitter import (
+        authenticate,
+        get_users,
+        get_users_following,
+        get_engagement,
+    )
 except ModuleNotFoundError:
     from ego_networks.src.neighborhoods.twitter import TwitterEgoNeighborhood
     from ego_networks.utils.api.twitter import (
         authenticate,
         get_users,
         get_users_following,
+        get_engagement,
     )
 
 from dotenv import load_dotenv
@@ -92,6 +98,26 @@ def test_get_users_following(twitter_client):
     assert len(actual) > 0
 
 
+def get_engagement_likes(twitter_client):
+    actual = get_engagement(
+        client=twitter_client,
+        user_id=sample_test_twitter_user_ids[0],
+        content_type="likes",
+    ).get("following")
+    assert len(actual) > 0
+    assert type(actual) == list
+
+
+def get_engagement_tweets(twitter_client):
+    actual = get_engagement(
+        client=twitter_client,
+        user_id=sample_test_twitter_user_ids[0],
+        content_type="tweets",
+    ).get("following")
+    assert len(actual) > 0
+    assert type(actual) == list
+
+
 def test_get_users_absent(twitter_client):
     with pytest.raises(ValueError):
         get_users(client=twitter_client, user_fields=["id"])
@@ -111,7 +137,7 @@ def test_update_ties(twitter_neighborhood):
     assert len(alters_all) >= 0
 
 
-def test_get_node_features(twitter_neighborhood, sample_nodes):
+def test_update_node_features(twitter_neighborhood, sample_nodes):
     actual = twitter_neighborhood.update_node_features(nodes=sample_nodes)
     feature_fields = [
         "id",
@@ -129,8 +155,12 @@ def test_get_node_features(twitter_neighborhood, sample_nodes):
 
 
 def test_update_tie_features(twitter_neighborhood):
-    actual = twitter_neighborhood.update_tie_features()
-    assert actual is None
+    actual = twitter_neighborhood.update_tie_features(
+        max_users=2, sleep_time=0.0
+    )
+    assert type(actual) == DataFrame
+    assert actual.shape[0] > 0
+    assert actual.shape[1] > 0
 
 
 def test_delete_ties(twitter_neighborhood):

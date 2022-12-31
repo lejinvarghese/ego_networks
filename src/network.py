@@ -51,11 +51,12 @@ class HomogenousEgoNetwork(EgoNetwork):
     def focal_node_id(self):
         return self._focal_node_id
 
-    def __create_network(self, nodes=None, edges=None):
+    def __create_network(self, nodes=None, edges=None, edge_features=None):
 
         if self._use_cache:
             edges = DataReader(data_type="ties").run()
             nodes = DataReader(data_type="node_features").run()
+            edge_features = DataReader(data_type="tie_features").run()
 
         if (edges is None) | (nodes is None):
             raise ValueError(
@@ -65,7 +66,13 @@ class HomogenousEgoNetwork(EgoNetwork):
         edges.columns = ["source", "target"]
         edges["source"] = edges["source"].astype(int)
         edges["target"] = edges["target"].astype(int)
-        edges["weight"] = 1
+        if edge_features is not None:
+            edges = pd.merge(
+                edges, edge_features, on=["source", "target"], how="left"
+            )
+            edges["weight"] = edges["weight"].fillna(value=1)
+        else:
+            edges["weight"] = 1
         G = nx.from_pandas_edgelist(
             edges, create_using=nx.DiGraph(), edge_attr=True
         )
@@ -78,7 +85,7 @@ class HomogenousEgoNetwork(EgoNetwork):
         G_e = nx.ego_graph(
             G, int(self._focal_node_id), radius=self._radius, undirected=False
         )
-        logger.info(
+        logger.debug(
             f"Ego network of layers: {self._n_layers}, radius: {self._radius} created."
         )
         logger.info(
@@ -89,7 +96,7 @@ class HomogenousEgoNetwork(EgoNetwork):
     def create_measures(
         self, calculate_nodes=False, calculate_edges=False, cache=True
     ):
-        logger.info(f"Computing measures.")
+        logger.debug(f"Computing measures")
         measures = EgoNetworkMeasures(
             self.G,
             calculate_nodes=calculate_nodes,
@@ -108,5 +115,5 @@ class HomogenousEgoNetwork(EgoNetwork):
     def get_ego_user_attributes(
         self, radius: int = 1, attribute: str = "username"
     ):
-        g_1 = self.get_ego_graph_at_radius(radius)
-        return nx.get_node_attributes(g_1, attribute)
+        G_e = self.get_ego_graph_at_radius(radius)
+        return nx.get_node_attributes(G_e, attribute)

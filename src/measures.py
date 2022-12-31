@@ -10,8 +10,10 @@ import pandas as pd
 
 try:
     from src.core import NetworkMeasures
+    from utils.graph import brokerage
 except ModuleNotFoundError:
     from ego_networks.src.core import NetworkMeasures
+    from ego_networks.utils.graph import brokerage
 
 
 class EgoNetworkMeasures(NetworkMeasures):
@@ -83,14 +85,21 @@ class EgoNetworkMeasures(NetworkMeasures):
         measures = {}
         measures["degree_centrality"] = nx.in_degree_centrality(self.G)
         measures["betweenness_centrality"] = nx.betweenness_centrality(
-            self.G, k=min(len(self.G.nodes()), 250)
+            self.G,
+            k=min(self.G.number_of_nodes(), 250),
+            weight="weight",
         )
         measures["closeness_centrality"] = nx.closeness_centrality(self.G)
         measures["eigenvector_centrality"] = nx.eigenvector_centrality_numpy(
-            self.G
+            self.G,
+            weight="weight",
         )
-        measures["pagerank"] = nx.pagerank_scipy(self.G)
+        measures["pagerank"] = nx.pagerank_scipy(
+            self.G,
+            weight="weight",
+        )
         measures["hubs"], measures["authorities"] = nx.hits(self.G)
+        measures["brokerage"] = brokerage(self.G)
         measures_transformed = (
             pd.DataFrame.from_dict(measures, orient="index")
             .rename_axis(index="measure_name")

@@ -9,6 +9,6 @@ filterwarnings("ignore")
 
 if __name__ == "__main__":
     c = Controller()
-    c.update_neighborhood()
+    # c.update_neighborhood()
     # c.update_measures()
-    # c.update_recommendations()
+    c.update_recommendations()
