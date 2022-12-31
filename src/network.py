@@ -89,6 +89,7 @@ class HomogenousEgoNetwork(EgoNetwork):
     def create_measures(
         self, calculate_nodes=False, calculate_edges=False, cache=True
     ):
+        logger.info(f"Computing measures.")
         measures = EgoNetworkMeasures(
             self.G,
             calculate_nodes=calculate_nodes,

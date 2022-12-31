@@ -165,9 +165,9 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             )
         logger.info(f"Previous ties: {self.previous_ties.shape[0]}")
         logger.info(
-            f"Current alters \n@radius 1: {len(alters.get(1).get('current'))}"
+            f"Current alters @radius 1: {len(alters.get(1).get('current'))}"
         )
-        logger.info(f"New alters \n@radius 1: {len(alters.get(1).get('new'))}")
+        logger.info(f"New alters @radius 1: {len(alters.get(1).get('new'))}")
 
         # get new ties, or new edges
         new_ties = [

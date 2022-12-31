@@ -83,7 +83,7 @@ class EgoNetworkMeasures(NetworkMeasures):
         measures = {}
         measures["degree_centrality"] = nx.in_degree_centrality(self.G)
         measures["betweenness_centrality"] = nx.betweenness_centrality(
-            self.G, k=min(len(self.G.nodes()), 500)
+            self.G, k=min(len(self.G.nodes()), 250)
         )
         measures["closeness_centrality"] = nx.closeness_centrality(self.G)
         measures["eigenvector_centrality"] = nx.eigenvector_centrality_numpy(

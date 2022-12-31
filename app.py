@@ -8,7 +8,12 @@ except ModuleNotFoundError:
     from ego_networks.utils.api.twitter import get_twitter_profile_image
 
 
-@st.cache(allow_output_mutation=True, persist=True, hash_funcs={Controller: id})
+@st.cache(
+    allow_output_mutation=True,
+    persist=True,
+    hash_funcs={Controller: id},
+    show_spinner=False,
+)
 def engine():
     return Controller()
 

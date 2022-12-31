@@ -1,9 +1,9 @@
 weights = {
     "diverse": {
         "degree_centrality": -10,
-        "closeness_centrality": -5,
+        "closeness_centrality": -8,
         "authorities": -5,
-        "pagerank": 3,
+        "pagerank": 5,
     },
     "connectors": {
         "degree_centrality": -2,
@@ -14,8 +14,9 @@ weights = {
     },
     "influencers": {
         "degree_centrality": 5,
-        "eigenvector_centrality": 8,
-        "authorities": 10,
-        "pagerank": 10,
+        "pagerank": 5,
+        "authorities": 8,
+        "closeness_centrality": 8,
+        "eigenvector_centrality": 10,
     },
 }
