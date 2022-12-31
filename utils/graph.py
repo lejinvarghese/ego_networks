@@ -57,69 +57,86 @@ def sample_knowledge_graph():
     return graph, edge_labels, node_labels
 
 
-def draw_nx_graph(
-    graph=None,
-    pos=None,
-    node_labels=None,
-    edge_labels=None,
-    width=1,
-    linewidths=1,
-    node_size=3500,
-    alpha=0.9,
-    font_size=16,
-    fig_size=(20, 20),
-    dpi=240,
-    length=17,
-    node_color="dimgrey",
-    node_label_font_color="whitesmoke",
-    edge_color="peachpuff",  # "darkgrey",
-    edge_label_font_color="tomato",
-    title=None,
-):
+def get_node_labels(graph):
+    return {node: node for node in graph.nodes()}
+
+
+def wrap_node_labels(node_labels, width, break_long_words=False):
+    from textwrap import fill
+
+    node_labels_w = {}
+    for i in node_labels.items():
+        k, v = i
+        node_labels_w[k] = fill(
+            str(v), width=width, break_long_words=break_long_words
+        )
+    return node_labels_w
+
+
+def draw_nx_graph(graph, **kwargs):
     """
-    Takes a graph and edge labels and draws a diagram. You need to pass edge labels
-    if you are passing a graph parameters.
-    For smaller subgraphs pass nx.circular_layout for pos.
+    Receives a networkx graph and plots it.
     """
     import matplotlib.pyplot as plt
     import networkx as nx
 
-    if pos:
-        _pos = pos
-    else:
-        _pos = nx.spring_layout(graph)
-
-    if node_labels:
-        _with_labels = True
-    else:
-        _with_labels = False
-
-    fig = plt.figure(figsize=fig_size, dpi=dpi)
-    if title:
-        fig.suptitle(title)
-    nx.draw(
-        graph,
-        pos=_pos,
-        edge_color=edge_color,
-        width=width,
-        linewidths=linewidths,
-        node_size=node_size,
-        node_color=node_color,
-        alpha=alpha,
-        font_color=node_label_font_color,
-        font_size=font_size,
-        with_labels=_with_labels,
+    fig, ax = plt.subplots(
+        figsize=kwargs.get("figsize", (20, 20)), dpi=kwargs.get("dpi", 240)
     )
-
-    nx.draw_networkx_edge_labels(
-        graph,
-        _pos,
-        edge_labels=edge_labels,
-        font_color=edge_label_font_color,
-        font_size=font_size,
+    if kwargs.get("title"):
+        fig.suptitle(kwargs.get("title"))
+    pos = kwargs.get(
+        "pos", nx.spring_layout(graph, seed=kwargs.get("random_state", 100))
     )
-    plt.axis("off")
-    plt.show()
+    nx.draw_networkx_nodes(
+        graph,
+        pos=pos,
+        node_size=kwargs.get("node_size", 3500),
+        node_color=kwargs.get("node_color", "dimgrey"),
+        alpha=kwargs.get("alpha", 0.9),
+        linewidths=kwargs.get("line_widths", 1),
+        edgecolors=kwargs.get("line_colors"),
+    )
+    nx.draw_networkx_labels(
+        graph,
+        pos=pos,
+        font_color=kwargs.get("node_label_font_color", "whitesmoke"),
+        font_size=kwargs.get("font_size", 12),
+        labels=wrap_node_labels(
+            kwargs.get("node_labels", get_node_labels(graph)), 10
+        ),
+        verticalalignment=kwargs.get("verticalalignment", "center_baseline"),
+    )
+    nx.draw_networkx_edges(
+        graph,
+        pos,
+        edge_color=kwargs.get("edge_colors", "red"),
+        width=kwargs.get("width", 1),
+        arrowsize=kwargs.get("arrowsize", 25),
+        arrowstyle=kwargs.get("arrowstyle", "-|>"),
+        connectionstyle=kwargs.get("connectionstyle", "arc3, rad = 0.05"),
+    )
+    if kwargs.get("edge_labels"):
+        nx.draw_networkx_edge_labels(
+            graph,
+            pos,
+            bbox=kwargs.get("edge_bbox", dict(alpha=0.0, lw=0)),
+            edge_labels=kwargs.get("edge_labels"),
+            font_color=kwargs.get("edge_label_font_color", "tomato"),
+            font_size=int(kwargs.get("font_size", 12) * 0.7),
+        )
+    fig.patch.set_facecolor(kwargs.get("background_color", "whitesmoke"))
+    fig.patch.set_alpha(kwargs.get("background_alpha", 0.8))
+    ax.set_facecolor(kwargs.get("background_color", "whitesmoke"))
+    ax.axis(kwargs.get("axis", "off"))
+    if kwargs.get("save"):
+        fig.savefig(
+            kwargs.get("file_path", "figure.png"),
+            facecolor=fig.get_facecolor(),
+            edgecolor="none",
+            bbox_inches="tight",
+        )
+    fig.show()
 
 
 def brokerage(graph, k=100, seed=42):
@@ -127,7 +144,7 @@ def brokerage(graph, k=100, seed=42):
     from pandas import Series
 
     e_cen = edge_betweenness_centrality(
-        graph, k=min(len(graph.nodes()), 100), seed=42
+        graph, k=min(len(graph.nodes()), k), seed=seed
     )
     e_cen_series = (
         Series(e_cen)
@@ -142,8 +159,8 @@ def get_ego_graph(graph, edge_labels=None, node="Tom", radius=1):
     import networkx as nx
 
     ego_graph = nx.ego_graph(graph, n=node, radius=radius)
-    ego_edge_labels = dict()
-    ego_node_labels = {node: node for node in ego_graph.nodes()}
+    ego_edge_labels = {}
+    ego_node_labels = get_node_labels(ego_graph)
     if edge_labels:
         keys = edge_labels.keys()
         for key in keys:
@@ -192,7 +209,6 @@ def draw_plotly_graph(
     fig_size_px=(800, 800),
     hide_color_axis=True,
 ):
-
     import networkx as nx
     import plotly.graph_objects as go
 
@@ -209,7 +225,6 @@ def draw_plotly_graph(
         edge_y.append(y0)
         edge_y.append(y1)
         edge_y.append(None)
-
     edge_trace = go.Scatter(
         x=edge_x,
         y=edge_y,
@@ -217,14 +232,12 @@ def draw_plotly_graph(
         hoverinfo="none",
         mode="lines",
     )
-
     node_x = []
     node_y = []
     for node in graph.nodes():
         x, y = pos[node]
         node_x.append(x)
         node_y.append(y)
-
     node_trace = go.Scatter(
         x=node_x,
         y=node_y,
@@ -232,10 +245,6 @@ def draw_plotly_graph(
         hoverinfo="text",
         marker=dict(
             showscale=True,
-            # colorscale options
-            #'Greys' | 'YlGnBu' | 'Greens' | 'YlOrRd' | 'Bluered' | 'RdBu' |
-            #'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
-            #'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
             colorscale="Bluered",
             reversescale=False,
             color=[],
@@ -244,7 +253,6 @@ def draw_plotly_graph(
             line_width=0.0,
         ),
     )
-
     # color nodes
     if node_labels:
         _node_labels = node_labels
@@ -257,21 +265,18 @@ def draw_plotly_graph(
                 "adjacent connections: " + str(len(adjacencies[1]))
             )
     node_trace.text = _node_labels
-
     if node_colors == "default":
         c_ev = nx.eigenvector_centrality(graph)
         _node_colors = [1e2 * x for x in list(c_ev.values())]
     else:
         _node_colors = node_colors
     node_trace.marker.color = _node_colors
-
     if node_sizes == "default":
         c_ev = nx.eigenvector_centrality(graph)
         _node_sizes = [1e2 * x for x in list(c_ev.values())]
     else:
         _node_sizes = node_sizes
     node_trace.marker.size = _node_sizes
-
     # create plot
     fig = go.Figure(
         data=[edge_trace, node_trace],
@@ -281,7 +286,7 @@ def draw_plotly_graph(
                 "font_size": 16,
                 "x": 0.5,
                 "xanchor": "center",
-                "yanchor": "top",  # new
+                "yanchor": "top",
             },
             showlegend=False,
             hovermode="closest",
@@ -294,8 +299,6 @@ def draw_plotly_graph(
     )
     if hide_color_axis:
         fig.update_coloraxes(showscale=False)
-
     fig.show()
-
     if write_html:
         fig.write_html("first_degree_test.html", auto_open=True)
