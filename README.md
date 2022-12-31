@@ -74,3 +74,5 @@ streamlit run app.py
 
 - [Gobo](https://www.media.mit.edu/projects/gobo/overview/) by Ethan Zuckerman et al., MIT Media Lab
   - [GitHub: inactive](https://github.com/mitmedialab/gobo)
+- [Information Centrality](https://www.researchgate.net/publication/329414133_Understanding_Information_Centrality_Metric_A_Simulation_Approach)
+- [Centrality Measures in Social Networks](https://thesai.org/Publications/ViewPaper?Volume=10&Issue=1&Code=IJACSA&SerialNo=13)
