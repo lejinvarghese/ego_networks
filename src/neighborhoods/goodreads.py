@@ -19,6 +19,7 @@ load_dotenv()
 filterwarnings("ignore")
 logger = CustomLogger(__name__)
 
+
 class GoodreadsEgoNeighborhood(EgoNeighborhood):
     def __init__(
         self,

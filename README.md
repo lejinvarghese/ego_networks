@@ -16,7 +16,7 @@ This project is a broad effort to give an individual control over what informati
     -   However, the `information flow` is inward.
 -    The framework is designed to be extensible to other social networks and other types of content and idea networks.
      -   Work is in progress to extend this to a `heterogenous network` of multiple entities such as `people, content, communities, ideas` and differing relationships between them.
-     -   This could also extend to a complex [multiplex network](https://cosnet.bifi.es/network-theory/multiplex-networks/), in which nformation would flow through multiple layers of the network (imagine real and virtual multi layered networks) with differing diffusion patterns.
+     -   This could also extend to a complex [multiplex network](https://cosnet.bifi.es/network-theory/multiplex-networks/), in which information would flow through multiple layers of the network (imagine real and virtual multi layered networks) with differing diffusion patterns.
 
 <p align="center">
     <img src="https://cosnet.bifi.es/wp-content/uploads/2014/06/multiplex_networks_2a.jpg" alt="ego" width="500"/>

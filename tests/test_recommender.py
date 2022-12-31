@@ -29,8 +29,6 @@ def sample_targets():
     return {str(i): "name" + "_" + str(i) for i in range(n_samples // 2)}
 
 
-
-
 def test_recommender_train(sample_measures):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
 
@@ -54,13 +52,12 @@ def test_recommender_test(sample_measures, sample_targets):
 
 
 def test_recommender_recommendations(
-    sample_measures, sample_targets,
+    sample_measures,
+    sample_targets,
 ):
     recommender = EgoNetworkRecommender(network_measures=sample_measures)
     recommender.train(recommendation_strategy="diverse")
-    (
-        recommended_profile_ids
-    ) = recommender.get_recommendations(
+    (recommended_profile_ids) = recommender.get_recommendations(
         sample_targets, k=3
     )
     assert recommended_profile_ids[0] == "99"

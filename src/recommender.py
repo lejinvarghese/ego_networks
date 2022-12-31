@@ -71,9 +71,7 @@ class EgoNetworkRecommender(NetworkRecommender):
         """
         Returns a list of recommendations for the focal node.
         """
-        logger.debug(
-            f"Retrieving top {k} recommendations:"
-        )
+        logger.debug(f"Retrieving top {k} recommendations:")
         predicted = self.__ranks.index.to_list()
         actuals = targets
         return [i for i in predicted if i not in actuals][:k]
