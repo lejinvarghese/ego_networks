@@ -52,6 +52,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             user_fields=["id"],
             user_names=[self._focal_node],
         )[0].id
+        self.alters = self.__instanstiate_alter_state()
 
     @property
     def layer(self):
@@ -89,7 +90,6 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         """
         Updates the neighborhood of the focal node
         """
-
         if mode == "append":
             logger.info(
                 f"Appending to the ego neigborhood for {self._focal_node_id}, @max radius: {self._max_radius}"
@@ -135,62 +135,28 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
 
     def update_ties(self):
 
-        alters = {}
-        alters = {
-            i: {"previous": set(), "current": set(), "new": set()}
-            for i in range(1, self._max_radius + 1)
-        }
-        alters[1]["previous"] = set(self.previous_ties.user.unique())
-        if self._max_radius == 2:
-            alters[2]["previous"] = set(
-                self.previous_ties.following.unique()
-            ) - alters.get(1).get("previous")
-
-        alters[1]["current"] = set(
-            get_users_following(
-                client=self._client, user_id=self._focal_node_id
-            ).get("following")
-        )
-
-        alters[1]["new"] = alters.get(1).get("current") - alters.get(1).get(
-            "previous"
-        )
-
-        logger.info(
-            f"Previous alters @radius 1: {len(alters.get(1).get('previous'))}"
-        )
-        if self._max_radius == 2:
-            logger.info(
-                f"Previous alters @radius 2: {len(alters.get(2).get('previous'))}"
-            )
-        logger.info(f"Previous ties: {self.previous_ties.shape[0]}")
-        logger.info(
-            f"Current alters @radius 1: {len(alters.get(1).get('current'))}"
-        )
-        logger.info(f"New alters @radius 1: {len(alters.get(1).get('new'))}")
-
         # get new ties, or new edges
         new_ties = [
             {
-                "user": self._focal_node_id,
-                "following": alters.get(1).get("new"),
+                "user": self.focal_node_id,
+                "following": self.alters.get(1).get("new"),
             }
         ]
 
         if self._max_radius == 2:
-            for u_id in alters.get(1).get("new"):
-                u_data = get_users_following(client=self._client, user_id=u_id)
+            for u_id in self.alters.get(1).get("new"):
+                u_data = get_users_following(client=self.client, user_id=u_id)
                 if len(u_data.get("following")) > 0:
                     new_ties.append(u_data)
-                    alters[2]["new"].update(set(u_data.get("following")))
+                    self.alters[2]["new"].update(set(u_data.get("following")))
 
         new_ties = pd.json_normalize(new_ties)
 
         # recalculate all new nodes
         alters_all = set()
-        for i in range(1, self._max_radius + 1):
-            alters_all.update(alters.get(i).get("previous"))
-            alters_all.update(alters.get(i).get("current"))
+        for i in range(1, self.max_radius + 1):
+            alters_all.update(self.alters.get(i).get("previous"))
+            alters_all.update(self.alters.get(i).get("current"))
 
         # remove nan values
         alters_all = {x for x in alters_all if x == x}
@@ -212,7 +178,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             previous_nodes_with_features = set()
 
         new_nodes = set(nodes - previous_nodes_with_features)
-        new_nodes.add(self._focal_node_id)
+        new_nodes.add(self.focal_node_id)
 
         logger.info(
             f"All nodes within radius {self._max_radius}: {len(nodes)}, \nNew nodes: {len(new_nodes)}"
@@ -238,7 +204,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             new_node_features.append(
                 pd.DataFrame(
                     get_users(
-                        client=self._client,
+                        client=self.client,
                         user_fields=feature_fields,
                         user_ids=batch,
                     )
@@ -250,38 +216,80 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
 
     def delete_ties(self):
 
-        previous_alters = set(self.previous_ties.user.unique())
-        previous_alters.remove(self._focal_node_id)
-
-        current_alters = set(
-            get_users_following(
-                client=self._client, user_id=self._focal_node_id
-            ).get("following")
-        )
-
-        removed_alters = previous_alters - current_alters
-
         # remove ties
-        cleansed_ties = self._previous_ties[
-            ~(self._previous_ties.user.isin(removed_alters))
+        cleansed_ties = self.previous_ties[
+            ~(self.previous_ties.user.isin(self.alters.get(1).get("removed")))
         ]
         cleansed_ties = (
             cleansed_ties.groupby("user")["following"]
             .apply(list)
             .reset_index(name="following")
         )
-        cleansed_node_features = self._previous_node_features[
-            ~(self._previous_node_features.index.isin(removed_alters))
+        cleansed_node_features = self.previous_node_features[
+            ~(
+                self.previous_node_features.index.isin(
+                    self.alters.get(1).get("removed")
+                )
+            )
         ]
         cleansed_node_features = cleansed_node_features.reset_index()
 
-        logger.info(f"Previous Ties: {self._previous_ties.shape}")
+        logger.info(f"Previous Ties: {self.previous_ties.shape}")
         logger.info(
-            f"Previous Node Features: {self._previous_node_features.shape}"
+            f"Previous Node Features: {self.previous_node_features.shape}"
         )
-        logger.warning(f"Removed alters: {len(removed_alters)}")
+        logger.warning(
+            f"Removed alters: {len(self.alters.get(1).get('removed'))}"
+        )
         logger.warning(f"Cleansed Ties: {cleansed_ties.shape}")
         logger.warning(
             f"Cleansed Node Features: {cleansed_node_features.shape}"
         )
         return cleansed_ties, cleansed_node_features
+
+    def __instanstiate_alter_state(self):
+        alters = {
+            i: {
+                "previous": set(),
+                "current": set(),
+                "new": set(),
+                "removed": set(),
+            }
+            for i in range(1, self.max_radius + 1)
+        }
+        alters[1]["previous"] = set(self.previous_ties.user.unique())
+        alters[1]["previous"] = (
+            alters.get(1).get("previous").difference(set([self.focal_node_id]))
+        )
+        alters[1]["current"] = set(
+            get_users_following(
+                client=self.client, user_id=self.focal_node_id
+            ).get("following")
+        )
+        alters[1]["new"] = alters.get(1).get("current") - alters.get(1).get(
+            "previous"
+        )
+        alters[1]["removed"] = alters.get(1).get("previous") - alters.get(
+            1
+        ).get("current")
+
+        if self.max_radius == 2:
+            alters[2]["previous"] = set(
+                self.previous_ties.following.unique()
+            ) - alters.get(1).get("previous")
+
+        logger.info(
+            f"Previous alters @radius 1: {len(alters.get(1).get('previous'))}"
+        )
+        if self.max_radius == 2:
+            logger.info(
+                f"Previous alters @radius 2: {len(alters.get(2).get('previous'))}"
+            )
+        logger.info(
+            f"Current alters @radius 1: {len(alters.get(1).get('current'))}"
+        )
+        logger.info(f"New alters @radius 1: {len(alters.get(1).get('new'))}")
+        logger.info(
+            f"New alters @radius 1: {len(alters.get(1).get('removed'))}"
+        )
+        return alters
