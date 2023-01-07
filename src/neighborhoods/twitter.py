@@ -279,6 +279,9 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         cleansed_ties = self.previous_ties[
             ~(self.previous_ties.user.isin(self.alters.get(1).get("removed")))
         ]
+        # cleansed_ties = self.previous_ties[
+        #     ~(self.previous_ties.following.isin(self.alters.get(1).get("removed")))
+        # ]
         cleansed_ties = (
             cleansed_ties.groupby("user")["following"]
             .apply(list)

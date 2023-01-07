@@ -15,9 +15,13 @@ except ModuleNotFoundError:
     hash_funcs={Controller: id},
     show_spinner=False,
 )
-def engine():
+def cache_controller():
     return Controller()
 
+
+engine = cache_controller()
+if "network" not in st.session_state:
+    st.session_state["network"] = engine.network
 
 def render_header():
     def rename_pages():
@@ -33,7 +37,7 @@ def render_header():
 
     rename_pages()
     st.set_page_config(
-        page_title="🏠 home",
+        page_title="🏠",
         layout="wide",
         initial_sidebar_state="collapsed",
     )
@@ -102,13 +106,13 @@ def render_recommendations(
 ):
     with st.spinner("Please wait"):
         if update_neighborhood:
-            engine().update_neighborhood()
+            engine.update_neighborhood()
         if update_measures:
-            engine().update_measures()
+            engine.update_measures()
         (
             recommended_profile_names,
             recommended_profile_images,
-        ) = engine().update_recommendations(
+        ) = engine.update_recommendations(
             recommendation_strategy=recommendation_strategy,
             n_recommendations=n_recommendations,
         )
