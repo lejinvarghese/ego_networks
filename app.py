@@ -18,11 +18,6 @@ except ModuleNotFoundError:
 def cache_controller():
     return Controller()
 
-
-engine = cache_controller()
-if "network" not in st.session_state:
-    st.session_state["network"] = engine.network
-
 def render_header():
     def rename_pages():
         pages = st.source_util.get_pages("app.py")
@@ -59,6 +54,10 @@ def render_header():
     )
     st.markdown("## Recommendations")
 
+render_header()
+engine = cache_controller()
+if "network" not in st.session_state:
+    st.session_state["network"] = engine.network
 
 def render_sidebar():
     with st.sidebar:
@@ -136,7 +135,6 @@ def render_recommendations(
 
 def main():
 
-    render_header()
 
     (
         update_neighborhood,
