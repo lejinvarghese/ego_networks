@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 try:
     from src.controller import Controller
     from utils.api.twitter import get_twitter_profile_image
@@ -19,17 +20,28 @@ def engine():
 
 
 def render_header():
-    st.title("Recommendations from your Ego Network")
-    """
-    Generates recommendations from the Twitter Ego Network.
-    """
+    st.set_page_config(
+        page_title="🏠 home",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
+    st.title("User recommendations")
+    st.markdown("Generates user recommendations from your ego network.")
     with open(".streamlit/style.css") as css:
-        st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
+        streamlit_style = f"""
+                <style>
+                {css.read()}
+                MainMenu {{visibility: hidden;}}
+                footer {{visibility: hidden;}}
+                </style>
+                """
+        st.markdown(streamlit_style, unsafe_allow_html=True)
 
     st.image(
         image="https://www.freepnglogos.com/uploads/twitter-logo-png/twitter-logo-vector-png-clipart-1.png",
         width=50,
     )
+    st.markdown("## Recommendations")
 
 
 def render_sidebar():
@@ -89,7 +101,6 @@ def render_recommendations(
             n_recommendations=n_recommendations,
         )
 
-    st.title("**Recommendations**")
     n_rows = 5
     n_cols = len(recommended_profile_names) // n_rows
     cols = st.columns(n_cols)
@@ -101,14 +112,14 @@ def render_recommendations(
         profile_image = get_twitter_profile_image(user_name, profile_image)
         col_idx = idx % n_cols
         with cols[col_idx]:
-            st.write(f"{idx+1}: **{user_name}**")
             st.markdown(
                 f"[![image]({profile_image})](http://twitter.com/{user_name})"
             )
+            st.write(f"{idx+1}: **{user_name}**")
 
 
 def main():
-    st.set_page_config(layout="wide")
+
     render_header()
 
     (
