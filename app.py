@@ -20,6 +20,18 @@ def engine():
 
 
 def render_header():
+    def rename_pages():
+        pages = st.source_util.get_pages("app.py")
+        new_page_names = {
+            "app": "🏠 home",
+            "users": "🦝 users",
+        }
+
+        for key, page in pages.items():
+            if page.get("page_name") in new_page_names:
+                page["page_name"] = new_page_names.get(page.get("page_name"))
+
+    rename_pages()
     st.set_page_config(
         page_title="🏠 home",
         layout="wide",

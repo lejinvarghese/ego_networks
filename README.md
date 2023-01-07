@@ -52,7 +52,7 @@ python3 -m src.main
 
 ```bash
 source .venv/bin/activate
-streamlit run 0_🏠_home.py
+streamlit run app.py
 ```
 
 ## Twitter User Recommendations
