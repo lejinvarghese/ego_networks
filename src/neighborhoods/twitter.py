@@ -118,7 +118,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
                     "No new node features to append to the neighborhood"
                 )
 
-            tie_features = self.update_tie_features()
+            tie_features = self.update_tie_features(sleep_time=10)
             if tie_features.shape[0] > 0:
                 writer = DataWriter(data=tie_features, data_type="tie_features")
                 writer.run(append=True)
@@ -179,7 +179,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         alters_all = {x for x in alters_all if x == x}
         return new_ties, alters_all
 
-    def update_tie_features(self, max_users=None, sleep_time=0.5):
+    def update_tie_features(self, max_users=None, sleep_time=0.1):
         logger.debug(f"Updating tie features")
         tie_features = pd.DataFrame()
         content_types = ["tweets", "mentions", "likes"]
@@ -191,7 +191,7 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
             time.sleep(sleep_time)
             for i, user_id in enumerate(user_ids):
                 if i % 100 == 0:
-                    time.sleep(sleep_time * 10)
+                    time.sleep(sleep_time)
                 try:
                     data = get_engagement(
                         client=self.client, user_id=user_id, content_type=c
@@ -278,6 +278,9 @@ class TwitterEgoNeighborhood(EgoNeighborhood):
         # remove ties
         cleansed_ties = self.previous_ties[
             ~(self.previous_ties.user.isin(self.alters.get(1).get("removed")))
+        ]
+        cleansed_ties = cleansed_ties[
+            ~(cleansed_ties.following.isin(self.alters.get(1).get("removed")))
         ]
         cleansed_ties = (
             cleansed_ties.groupby("user")["following"]

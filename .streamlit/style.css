@@ -1,11 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400,700&display=swap'); 
 
-html, body, [class*="css"] {
-    font-family: 'Roboto', sans-serif;
-    color: darkslategrey;
-}
 h1, h2, h3, h4, h5, h6 {
-	font-family: 'Roboto', sans-serif;
-    color: black;
-	font-weight: bold;
+    color: slategray;
+}
+body, p {
+    color: darkslategray;
+}
+.highlight {
+    margin-top: 0.1rem;
+    border-radius: 0.4rem;
+    color: white;
+    padding: 0.3rem;
+    margin-bottom: 0.1rem;
+}
+.blue {
+    background-color: lightblue;
+}
+.red {
+    background-color: lightcoral;
 }

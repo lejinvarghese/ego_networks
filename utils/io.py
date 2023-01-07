@@ -55,10 +55,10 @@ class DataReader(DataConfig):
         if self.data_type == "ties":
             data.following = data.following.apply(ast.literal_eval)
             data = data.explode("following")
-            return data.dropna()
+            return data.dropna().drop_duplicates()
         elif self.data_type == "node_features":
             return (
-                data.drop_duplicates()
+                data.drop_duplicates(subset="id")
                 .set_index("id")
                 .drop(columns="witheld", errors="ignore")
             )
