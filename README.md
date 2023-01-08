@@ -64,7 +64,6 @@ streamlit run app.py
 </p>
 <br>
 <p float="left" align="middle">
-        <img src="./assets/users.png" alt="sample" height="350"/>
         <img src="./assets/user_ratings.png" alt="sample" height="350"/>
 </p>
 

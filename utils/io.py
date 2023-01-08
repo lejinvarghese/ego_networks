@@ -29,6 +29,7 @@ class DataConfig:
         "node_features": f"{root_dir}/features/node",
         "tie_features": f"{root_dir}/features/ties",
         "node_measures": f"{root_dir}/measures/node",
+        "node_ratings": f"{root_dir}/features/node_ratings",
     }
 
 
