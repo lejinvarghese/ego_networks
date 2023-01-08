@@ -18,6 +18,7 @@ except ModuleNotFoundError:
 def cache_controller():
     return Controller()
 
+
 def render_header():
     def rename_pages():
         pages = st.source_util.get_pages("app.py")
@@ -37,7 +38,6 @@ def render_header():
         initial_sidebar_state="collapsed",
     )
     st.title("User recommendations")
-    st.markdown("Generates user recommendations from your ego network.")
     with open(".streamlit/style.css") as css:
         streamlit_style = f"""
                 <style>
@@ -54,10 +54,12 @@ def render_header():
     )
     st.markdown("## Recommendations")
 
+
 render_header()
 engine = cache_controller()
 if "network" not in st.session_state:
     st.session_state["network"] = engine.network
+
 
 def render_sidebar():
     with st.sidebar:
@@ -134,7 +136,6 @@ def render_recommendations(
 
 
 def main():
-
 
     (
         update_neighborhood,

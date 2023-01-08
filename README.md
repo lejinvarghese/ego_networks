@@ -62,6 +62,10 @@ streamlit run app.py
         <img src="./assets/recs_strategy_connectors.png" alt="sample" width="220"/>
         <img src="./assets/recs_strategy_influencers.png" alt="sample" width="220"/>
 </p>
+<br>
+<p float="left" align="middle">
+        <img src="./assets/user_ratings.png" alt="sample" height="350"/>
+</p>
 
 ### Observations
 

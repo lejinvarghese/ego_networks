@@ -63,25 +63,24 @@ def get_twitter_profile_image(
     user_name: str,
     image_url: str,
     image_size: int = 200,
+    default_image_url: str = "https://cpraonline.files.wordpress.com/2014/07/new-twitter-logo-vector-200x200.png",
 ) -> bool:
-
-    if not (url_exists(image_url)):
-        image_url = get_user_profile_image(user_name)
-    return image_url.replace("_normal", f"_{image_size}x{image_size}")
+    if image_url and image_url != "":
+        if not (url_exists(image_url)):
+            image_url = get_user_profile_image(user_name)
+        return image_url.replace("_normal", f"_{image_size}x{image_size}")
+    else:
+        return default_image_url
 
 
 def get_user_profile_image(
     user_name: str,
-    default_image_url: str = "https://cpraonline.files.wordpress.com/2014/07/new-twitter-logo-vector-200x200.png",
 ):
     client = authenticate(TWITTER_API_BEARER_TOKEN)
     image_url = get_users(
         client, user_fields=["profile_image_url"], user_names=[user_name]
     )[0].get("profile_image_url")
-    if image_url:
-        return image_url
-    else:
-        return default_image_url
+    return image_url
 
 
 def get_engagement(
