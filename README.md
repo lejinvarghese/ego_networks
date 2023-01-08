@@ -63,6 +63,11 @@ streamlit run app.py
         <img src="./assets/recs_strategy_influencers.png" alt="sample" width="220"/>
 </p>
 
+<p float="left" align="middle">
+        <img src="./assets/users.png" alt="sample" width="220"/>
+        <img src="./assets/user_ratings.png" alt="sample" width="220"/>
+</p>
+
 ### Observations
 
 - The `diverse` recommendation algorithms are tuned to use network measures to surface a list spread across ideological diversity, which can be seen in these top three recommendations.
