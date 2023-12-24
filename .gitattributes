@@ -1,3 +1,4 @@
 docs/** linguist-vendored
 notebooks/** linguist-vendored
 assets/** linguist-vendored
+labs/** linguist-vendored
