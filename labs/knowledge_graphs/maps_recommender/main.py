@@ -37,18 +37,14 @@ class GooglePlacesAPI:
             response = requests.get(url)
             return json.loads(response.text)
         except Exception as e:
-            click.secho(
-                f"Error getting place details: {place_id} {e}", fg="red"
-            )
+            click.secho(f"Error getting place details: {place_id} {e}", fg="red")
             return None
 
     def ping(self, location: str = "cn tower"):
         place_id = self.find_place(location)
         if place_id:
             details = self.get_place_details(place_id)
-            click.secho(
-                f"Place details: {json.dumps(details, indent=4)}", fg="blue"
-            )
+            click.secho(f"Place details: {json.dumps(details, indent=4)}", fg="blue")
 
 
 class PersonalPlacesProcessor:
@@ -72,33 +68,23 @@ class PersonalPlacesProcessor:
                 if file == "saved_places":
                     df = pd.read_json(f"data/{file}.json")
                     df = pd.DataFrame(list(df.features))
-                    df["Title"] = df["properties"].progress_apply(
-                        lambda x: x.get("location", {}).get("name")
-                    )
+                    df["Title"] = df["properties"].progress_apply(lambda x: x.get("location", {}).get("name"))
                     df = df[["Title"]].dropna()
                 elif file == "reviews":
                     df = pd.read_json(f"data/{file}.json")
                     df = pd.DataFrame(list(df.features))
-                    df["rating"] = df["properties"].progress_map(
-                        lambda x: x.get("five_star_rating_published")
-                    )
-                    df["Title"] = df["properties"].progress_apply(
-                        lambda x: x.get("location", {}).get("name")
-                    )
+                    df["rating"] = df["properties"].progress_map(lambda x: x.get("five_star_rating_published"))
+                    df["Title"] = df["properties"].progress_apply(lambda x: x.get("location", {}).get("name"))
                     df = df[["Title", "rating"]].dropna()
                 else:
                     df = pd.read_csv(f"data/{file}.csv")[["Title"]]
 
-                df["place_id"] = df["Title"].progress_map(
-                    lambda x: self.places.find_place(x)
-                )
+                df["place_id"] = df["Title"].progress_map(lambda x: self.places.find_place(x))
                 df.columns = [f"{str.lower(col)}" for col in df.columns]
                 df.to_csv(output_file, index=False)
                 self.datasets[file] = df
             self.datasets["unique_places"] = (
-                pd.concat([v for _, v in self.datasets.items()])
-                .place_id.dropna()
-                .drop_duplicates()
+                pd.concat([v for _, v in self.datasets.items()]).place_id.dropna().drop_duplicates()
             )
         return self.datasets
 
