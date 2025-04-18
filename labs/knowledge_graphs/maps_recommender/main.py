@@ -40,7 +40,7 @@ class GooglePlacesAPI:
             click.secho(f"Error getting place details: {place_id} {e}", fg="red")
             return None
 
-    def ping(self, location: str = "cn tower"):
+    def ping(self, location: str = "la palette"):
         place_id = self.find_place(location)
         if place_id:
             details = self.get_place_details(place_id)
@@ -68,13 +68,13 @@ class PersonalPlacesProcessor:
                 if file == "saved_places":
                     df = pd.read_json(f"data/{file}.json")
                     df = pd.DataFrame(list(df.features))
-                    df["Title"] = df["properties"].progress_apply(lambda x: x.get("location", {}).get("name"))
+                    df["Title"] = df["properties"].map(lambda x: x.get("location", {}).get("name"))
                     df = df[["Title"]].dropna()
                 elif file == "reviews":
                     df = pd.read_json(f"data/{file}.json")
                     df = pd.DataFrame(list(df.features))
-                    df["rating"] = df["properties"].progress_map(lambda x: x.get("five_star_rating_published"))
-                    df["Title"] = df["properties"].progress_apply(lambda x: x.get("location", {}).get("name"))
+                    df["rating"] = df["properties"].map(lambda x: x.get("five_star_rating_published"))
+                    df["Title"] = df["properties"].map(lambda x: x.get("location", {}).get("name"))
                     df = df[["Title", "rating"]].dropna()
                 else:
                     df = pd.read_csv(f"data/{file}.csv")[["Title"]]
@@ -83,10 +83,49 @@ class PersonalPlacesProcessor:
                 df.columns = [f"{str.lower(col)}" for col in df.columns]
                 df.to_csv(output_file, index=False)
                 self.datasets[file] = df
-            self.datasets["unique_places"] = (
-                pd.concat([v for _, v in self.datasets.items()]).place_id.dropna().drop_duplicates()
-            )
+
+        output_file = f"data/processed/unique_places.csv"
+        if os.path.exists(output_file):
+            click.secho(f"Reading {file} because it exists.", fg="yellow")
+            unique_places = pd.read_csv(output_file)
+        else:
+            unique_places = self.get_unique_place_details()
+            unique_places.to_csv(output_file, index=False)
+        self.datasets["unique_places"] = unique_places
         return self.datasets
+
+    def get_unique_place_details(self):
+        unique_places = pd.concat([v for _, v in self.datasets.items()])[["place_id"]].dropna().drop_duplicates()
+        unique_places["place_details"] = unique_places.place_id.progress_map(
+            lambda x: self.places.get_place_details(x).get("result", {})
+        )
+
+        unique_places["price_level"] = unique_places.place_details.map(lambda x: x.get("price_level", 0))
+        unique_places["rating"] = unique_places.place_details.map(lambda x: x.get("rating", 0))
+        unique_places["types"] = unique_places.place_details.map(lambda x: x.get("types", []))
+
+        unique_places["overview"] = unique_places.place_details.map(
+            lambda x: x.get("editorial_summary", {}).get("overview", "")
+        )
+        unique_places["serves_beer"] = unique_places.place_details.map(lambda x: x.get("serves_beer", False))
+        unique_places["serves_wine"] = unique_places.place_details.map(lambda x: x.get("serves_wine", False))
+        unique_places["serves_dinner"] = unique_places.place_details.map(lambda x: x.get("serves_dinner", False))
+        unique_places["serves_lunch"] = unique_places.place_details.map(lambda x: x.get("serves_lunch", False))
+        unique_places["serves_vegetarian_food"] = unique_places.place_details.map(
+            lambda x: x.get("serves_vegetarian_food", False)
+        )
+        unique_places["address"] = unique_places.place_details.map(lambda x: x.get("formatted_address", False))
+
+        unique_places["url"] = unique_places.place_details.map(lambda x: x.get("url", ""))
+        unique_places["lat"] = unique_places.place_details.map(
+            lambda x: x.get("geometry", {}).get("location", {}).get("lat")
+        )
+        unique_places["lon"] = unique_places.place_details.map(
+            lambda x: x.get("geometry", {}).get("location", {}).get("lng")
+        )
+        unique_places["user_ratings_total"] = unique_places.place_details.map(lambda x: x.get("user_ratings_total", 0))
+
+        return unique_places
 
 
 @click.command()
@@ -96,6 +135,7 @@ def main(location):
     gp.ping()
     processor = PersonalPlacesProcessor()
     datasets = processor.process()
+
     for file, df in datasets.items():
         click.secho(f"{file} has {len(df)} records", fg="yellow")
         click.secho(df.head(), fg="green")
