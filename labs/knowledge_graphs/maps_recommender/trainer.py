@@ -6,28 +6,33 @@ import click
 import numpy as np
 from tqdm import tqdm
 from utils import logger
+import os
 
 
 class GNNTrainer:
     """Trainer for GNN models"""
 
-    def __init__(self, model, data, optimizer, criterion, device=None, batch_size=32):
+    def __init__(self, model, data, optimizer, criterion, device=None, batch_size=32, checkpoint_dir="checkpoints"):
         self.model = model
         self.data = data
         self.optimizer = optimizer
         self.criterion = criterion
         self.batch_size = batch_size
         self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.checkpoint_dir = checkpoint_dir
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        
         self.model.to(self.device)
         self.data.to(self.device)
+        
         # Add learning rate scheduler
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
             mode="max",  # We want to maximize validation accuracy
             factor=0.5,  # Multiply LR by this factor on plateau
-            patience=10,  # Number of epochs to wait before reducing LR
+            patience=3,  # Number of epochs to wait before reducing LR
             verbose=True,
-            min_lr=1e-6,  # Don't reduce LR below this value
+            min_lr=1e-8,  # Don't reduce LR below this value
         )
 
     def _get_batches(self, mask):
@@ -80,14 +85,55 @@ class GNNTrainer:
         correct = pred == self.data.y[mask]
         return float(correct.sum()) / int(mask.sum())
 
+    def save_checkpoint(self, val_acc, epoch):
+        """Save model checkpoint"""
+        checkpoint = {
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'scheduler_state_dict': self.scheduler.state_dict(),
+            'val_acc': val_acc,
+        }
+        checkpoint_path = os.path.join(self.checkpoint_dir, f"model_val_acc_{val_acc:.4f}.pt")
+        torch.save(checkpoint, checkpoint_path)
+        logger.success(f"Saved checkpoint to {checkpoint_path}")
+        
+        # # Remove old checkpoints, keep only the best
+        # for f in os.listdir(self.checkpoint_dir):
+        #     if f.endswith('.pt') and f != os.path.basename(checkpoint_path):
+        #         os.remove(os.path.join(self.checkpoint_dir, f))
+
+    def load_checkpoint(self, checkpoint_path=None):
+        """Load model checkpoint"""
+        if checkpoint_path is None:
+            # Find the best checkpoint
+            checkpoints = [f for f in os.listdir(self.checkpoint_dir) if f.endswith('.pt')]
+            if not checkpoints:
+                logger.warning("No checkpoints found")
+                return None
+            checkpoint_path = os.path.join(self.checkpoint_dir, sorted(checkpoints)[-1])
+        
+        if os.path.exists(checkpoint_path):
+            checkpoint = torch.load(checkpoint_path, map_location=self.device)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+            logger.success(f"Loaded checkpoint from {checkpoint_path}")
+            return checkpoint['epoch'], checkpoint['val_acc']
+        else:
+            logger.warning(f"No checkpoint found at {checkpoint_path}")
+            return None
+
     def train(self, epochs=200, patience=100, verbose=True):
         """Train the model with early stopping"""
+        start_epoch = 1
         best_val_acc = 0
+
         patience_counter = 0
         best_model_state = None
 
         # Use tqdm for epoch progress
-        pbar = tqdm(range(1, epochs + 1), desc="Epochs")
+        pbar = tqdm(range(start_epoch, epochs + 1), desc="Epochs")
         for epoch in pbar:
             loss = self.train_epoch()
             train_acc = self.evaluate(self.data.train_mask)
@@ -103,6 +149,8 @@ class GNNTrainer:
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
                 patience_counter = 0
+                # Save checkpoint
+                self.save_checkpoint(val_acc, epoch)
                 # Save best model weights
                 best_model_state = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
             else:

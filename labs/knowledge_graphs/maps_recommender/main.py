@@ -27,11 +27,12 @@ tqdm.pandas()
     default=1,
     help="Distance threshold in km for graph edges",
 )
-@click.option("--hidden", type=int, default=256, help="Hidden channels for GNN")
+@click.option("--hidden", type=int, default=64, help="Hidden channels for GNN")
 @click.option("--epochs", type=int, default=100, help="Number of training epochs")
 @click.option("--patience", type=int, default=40, help="Patience for early stopping")
-@click.option("--batch_size", type=int, default=64, help="Batch size for training")
-def main(distance, hidden, epochs, patience, batch_size):
+@click.option("--batch_size", type=int, default=32, help="Batch size for training")
+@click.option("--checkpoint_dir", type=str, default="data/checkpoints", help="Directory to save model checkpoints")
+def main(distance, hidden, epochs, patience, batch_size, checkpoint_dir):
     pdl = PlacesDataLoader()
     datasets = pdl.load()
 
@@ -58,7 +59,7 @@ def main(distance, hidden, epochs, patience, batch_size):
 
     # Initialize model
     model = GNNModel(num_features=data.num_features, hidden_channels=hidden, num_classes=2)
-    optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=5e-4)
 
     # Calculate class weights for imbalanced data
     labels = data.y.numpy()
@@ -73,7 +74,11 @@ def main(distance, hidden, epochs, patience, batch_size):
 
     # Train model
     logger.info("Training GNN model")
-    trainer = GNNTrainer(model, data, optimizer, criterion, batch_size=batch_size)
+    trainer = GNNTrainer(
+        model, data, optimizer, criterion, 
+        batch_size=batch_size,
+        checkpoint_dir=checkpoint_dir
+    )
     trainer.train(epochs=epochs, patience=patience)
 
     # Create evaluation dataframe with only test set places
