@@ -21,10 +21,10 @@ class GNNTrainer:
         self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.checkpoint_dir = checkpoint_dir
         os.makedirs(checkpoint_dir, exist_ok=True)
-        
+
         self.model.to(self.device)
         self.data.to(self.device)
-        
+
         # Add learning rate scheduler
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
@@ -63,7 +63,7 @@ class GNNTrainer:
             self.optimizer.zero_grad()
 
             # Forward pass
-            out = self.model(self.data.x, self.data.edge_index)
+            out = self.model(self.data.x, self.data.edge_index, self.data.edge_attr)
             batch_out = out[batch_idx]
             batch_labels = self.data.y[batch_idx]
 
@@ -80,7 +80,7 @@ class GNNTrainer:
     def evaluate(self, mask):
         """Evaluate the model on the given mask"""
         self.model.eval()
-        out = self.model(self.data.x, self.data.edge_index)
+        out = self.model(self.data.x, self.data.edge_index, self.data.edge_attr)
         pred = out[mask].argmax(dim=1)
         correct = pred == self.data.y[mask]
         return float(correct.sum()) / int(mask.sum())
@@ -88,16 +88,16 @@ class GNNTrainer:
     def save_checkpoint(self, val_acc, epoch):
         """Save model checkpoint"""
         checkpoint = {
-            'epoch': epoch,
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'scheduler_state_dict': self.scheduler.state_dict(),
-            'val_acc': val_acc,
+            "epoch": epoch,
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "scheduler_state_dict": self.scheduler.state_dict(),
+            "val_acc": val_acc,
         }
         checkpoint_path = os.path.join(self.checkpoint_dir, f"model_val_acc_{val_acc:.4f}.pt")
         torch.save(checkpoint, checkpoint_path)
         logger.success(f"Saved checkpoint to {checkpoint_path}")
-        
+
         # # Remove old checkpoints, keep only the best
         # for f in os.listdir(self.checkpoint_dir):
         #     if f.endswith('.pt') and f != os.path.basename(checkpoint_path):
@@ -107,19 +107,19 @@ class GNNTrainer:
         """Load model checkpoint"""
         if checkpoint_path is None:
             # Find the best checkpoint
-            checkpoints = [f for f in os.listdir(self.checkpoint_dir) if f.endswith('.pt')]
+            checkpoints = [f for f in os.listdir(self.checkpoint_dir) if f.endswith(".pt")]
             if not checkpoints:
                 logger.warning("No checkpoints found")
                 return None
             checkpoint_path = os.path.join(self.checkpoint_dir, sorted(checkpoints)[-1])
-        
+
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+            self.model.load_state_dict(checkpoint["model_state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
             logger.success(f"Loaded checkpoint from {checkpoint_path}")
-            return checkpoint['epoch'], checkpoint['val_acc']
+            return checkpoint["epoch"], checkpoint["val_acc"]
         else:
             logger.warning(f"No checkpoint found at {checkpoint_path}")
             return None
