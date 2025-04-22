@@ -13,11 +13,7 @@ class GNNTrainer:
         self.data = data
         self.optimizer = optimizer
         self.criterion = criterion
-        self.device = (
-            device
-            if device is not None
-            else torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        )
+        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.data.to(self.device)
 
@@ -26,9 +22,7 @@ class GNNTrainer:
         self.model.train()
         self.optimizer.zero_grad()
         out = self.model(self.data.x, self.data.edge_index)
-        loss = self.criterion(
-            out[self.data.train_mask], self.data.y[self.data.train_mask]
-        )
+        loss = self.criterion(out[self.data.train_mask], self.data.y[self.data.train_mask])
         loss.backward()
         self.optimizer.step()
         return loss.item()
@@ -107,9 +101,7 @@ class GNNTrainer:
             )
 
         return {
-            "classification_report": classification_report(
-                y_true, y_pred, output_dict=True
-            ),
+            "classification_report": classification_report(y_true, y_pred, output_dict=True),
             "roc_auc": roc_auc_score(y_true, y_prob),
         }
 
@@ -122,9 +114,7 @@ class GNNTrainer:
         )
 
         if verbose:
-            click.secho(
-                f"\nTop {top_k} places predicted as favorites:", fg="blue"
-            )
+            click.secho(f"\nTop {top_k} places predicted as favorites:", fg="blue")
             click.secho(
                 top_predicted[["title", "favorite_probability", "is_favorite"]],
                 fg="blue",
