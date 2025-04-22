@@ -61,34 +61,24 @@ class PlacesDataLoader:
     def _extract_place_details(self):
         """Extract place details from the datasets"""
         unique_places = pd.concat([v for _, v in self.datasets.items()])[["place_id"]].dropna().drop_duplicates()
-        unique_places["place_details"] = unique_places.place_id.progress_map(
-            lambda x: self.api.get_place_details(x).get("result", {})
-        )
+        unique_places["place_details"] = unique_places.place_id.progress_map(lambda x: self.api.get_place_details(x).get("result", {}))
         unique_places["title"] = unique_places.place_details.map(lambda x: x.get("name", ""))
         unique_places["price_level"] = unique_places.place_details.map(lambda x: x.get("price_level", 0))
         unique_places["rating"] = unique_places.place_details.map(lambda x: x.get("rating", 0))
         unique_places["user_ratings_total"] = unique_places.place_details.map(lambda x: x.get("user_ratings_total", 0))
         unique_places["types"] = unique_places.place_details.map(lambda x: x.get("types", []))
 
-        unique_places["overview"] = unique_places.place_details.map(
-            lambda x: x.get("editorial_summary", {}).get("overview", "")
-        )
+        unique_places["overview"] = unique_places.place_details.map(lambda x: x.get("editorial_summary", {}).get("overview", ""))
         unique_places["serves_beer"] = unique_places.place_details.map(lambda x: x.get("serves_beer", False))
         unique_places["serves_wine"] = unique_places.place_details.map(lambda x: x.get("serves_wine", False))
         unique_places["serves_dinner"] = unique_places.place_details.map(lambda x: x.get("serves_dinner", False))
         unique_places["serves_lunch"] = unique_places.place_details.map(lambda x: x.get("serves_lunch", False))
-        unique_places["serves_vegetarian_food"] = unique_places.place_details.map(
-            lambda x: x.get("serves_vegetarian_food", False)
-        )
+        unique_places["serves_vegetarian_food"] = unique_places.place_details.map(lambda x: x.get("serves_vegetarian_food", False))
         unique_places["address"] = unique_places.place_details.map(lambda x: x.get("formatted_address", False))
 
         unique_places["url"] = unique_places.place_details.map(lambda x: x.get("url", ""))
-        unique_places["lat"] = unique_places.place_details.map(
-            lambda x: x.get("geometry", {}).get("location", {}).get("lat")
-        )
-        unique_places["lon"] = unique_places.place_details.map(
-            lambda x: x.get("geometry", {}).get("location", {}).get("lng")
-        )
+        unique_places["lat"] = unique_places.place_details.map(lambda x: x.get("geometry", {}).get("location", {}).get("lat"))
+        unique_places["lon"] = unique_places.place_details.map(lambda x: x.get("geometry", {}).get("location", {}).get("lng"))
         unique_places["document"] = unique_places.progress_apply(self._create_document, axis=1)
         return unique_places
 
@@ -146,32 +136,31 @@ class PlacesDataLoader:
         return description
 
 
-class GraphDataProcessor:
-    def __init__(self, distance_threshold_km=1.0):
+class GraphDataLoader:
+    def __init__(self, distance_threshold_km: int = 2):
         self.distance_threshold_km = distance_threshold_km
-        self.text_encoder = SentenceTransformer("all-MiniLM-L6-v2")
-        self.data_dir = "labs/knowledge_graphs/maps_recommender/data/processed"
-        os.makedirs(self.data_dir, exist_ok=True)
+        self.text_encoder = SentenceTransformer("Alibaba-NLP/gte-modernbert-base")
+        self.file_path = self._get_path()
 
-    def _get_graph_path(self):
+    def _get_path(self):
         """Get the path for the saved graph file"""
-        return os.path.join(self.data_dir, f"graph_threshold_{self.distance_threshold_km}.pkl")
+        data_dir = "data/processed"
+        os.makedirs(data_dir, exist_ok=True)
+        return os.path.join(data_dir, f"graph_threshold_{self.distance_threshold_km}.pkl")
 
-    def save_graph(self, G, places_df):
+    def save(self, G):
         """Save the graph and places DataFrame to disk"""
-        graph_path = self._get_graph_path()
-        data = {"graph": G, "places_df": places_df}
-        with open(graph_path, "wb") as f:
+        data = {"graph": G}
+        with open(self.file_path, "wb") as f:
             pickle.dump(data, f)
 
-    def load_graph(self):
+    def load(self):
         """Load the graph and places DataFrame from disk if it exists"""
-        graph_path = self._get_graph_path()
-        if os.path.exists(graph_path):
-            with open(graph_path, "rb") as f:
+        if os.path.exists(self.file_path):
+            with open(self.file_path, "rb") as f:
                 data = pickle.load(f)
-            return data["graph"], data["places_df"]
-        return None, None
+            return data["graph"]
+        return None
 
     def haversine_distance(self, lat1, lon1, lat2, lon2):
         """Calculate the distance between two points on Earth in kilometers"""
@@ -187,65 +176,64 @@ class GraphDataProcessor:
 
         return distance
 
-    def build_graph(self, places_df, favorite_places):
+    def build(self, nodes, labels):
         """Build a graph where nodes are places and edges connect places within the distance threshold"""
-        G, saved_places_df = self.load_graph()
-        if G is not None and saved_places_df is not None:
-            print("Loaded existing graph from disk")
-            return G, saved_places_df
+        G = self.load()
+        if G is not None:
+            logger.success("Loaded existing graph from disk.")
+            return G
 
-        print("Building new graph.")
-        places_df = places_df.copy()
-        places_df["is_favorite"] = places_df["title"].str.lower().isin(favorite_places).astype(int)
+        logger.info("Building new graph.")
+        nodes = nodes.copy()
+        logger.highlight(f"Initial nodes count: {len(nodes)}")
+        logger.highlight(f"Initial labels count: {len(labels)}")
 
-        text_descriptions = [row.document for _, row in places_df.iterrows()]
+        # Convert labels to lowercase for case-insensitive comparison
+        labels_lower = {str(l).lower() for l in labels}
+        nodes["is_favorite"] = nodes["place_id"].str.lower().isin(labels_lower).astype(int)
+
+        logger.highlight(f"Nodes with is_favorite=1: {nodes['is_favorite'].sum()}")
+        logger.highlight(f"Unique place_ids in nodes: {nodes['place_id'].nunique()}")
+        logger.highlight(f"Nodes with missing lat/lon: {nodes[pd.isna(nodes['lat']) | pd.isna(nodes['lon'])].shape[0]}")
+
+        text_descriptions = [row.document for _, row in nodes.iterrows()]
         text_embeddings = self.text_encoder.encode(text_descriptions, show_progress_bar=True)
+        logger.highlight(f"Generated embeddings count: {len(text_embeddings)}")
 
-        # Create a graph
         G = nx.Graph()
-        for idx, (row, embedding) in enumerate(zip(places_df.iterrows(), text_embeddings)):
+        for idx, (row, embedding) in enumerate(zip(nodes.iterrows(), text_embeddings)):
             _, row = row
-            # Combine text embedding with numerical features
-            numerical_features = np.array(
-                [
-                    row.price_level if not pd.isna(row.price_level) else 0,
-                    row.rating if not pd.isna(row.rating) else 0,
-                    (row.user_ratings_total if not pd.isna(row.user_ratings_total) else 0),
-                ]
-            )
-
-            # Concatenate text embedding with numerical features
-            node_features = np.concatenate([embedding, numerical_features])
-
+            node_features = np.concatenate([embedding])
             G.add_node(idx, features=node_features)
             G.nodes[idx]["label"] = row.is_favorite
 
-        for i in range(len(places_df)):
-            for j in range(i + 1, len(places_df)):
-                if (
-                    pd.isna(places_df.iloc[i].lat)
-                    or pd.isna(places_df.iloc[i].lon)
-                    or pd.isna(places_df.iloc[j].lat)
-                    or pd.isna(places_df.iloc[j].lon)
-                ):
+        logger.highlight(f"Graph nodes count: {G.number_of_nodes()}")
+        logger.highlight(f"Graph nodes with label=1: {sum(1 for _, d in G.nodes(data=True) if d['label'] == 1)}")
+
+        edge_count = 0
+        skipped_edges = 0
+        for i in range(len(nodes)):
+            for j in range(i + 1, len(nodes)):
+                if pd.isna(nodes.iloc[i].lat) or pd.isna(nodes.iloc[i].lon) or pd.isna(nodes.iloc[j].lat) or pd.isna(nodes.iloc[j].lon):
+                    skipped_edges += 1
                     continue
 
                 distance = self.haversine_distance(
-                    places_df.iloc[i].lat,
-                    places_df.iloc[i].lon,
-                    places_df.iloc[j].lat,
-                    places_df.iloc[j].lon,
+                    nodes.iloc[i].lat,
+                    nodes.iloc[i].lon,
+                    nodes.iloc[j].lat,
+                    nodes.iloc[j].lon,
                 )
 
                 if distance <= self.distance_threshold_km:
                     G.add_edge(i, j, weight=1.0 / (1 + distance))
+                    edge_count += 1
 
-        # Save the constructed graph
-        self.save_graph(G, places_df)
+        logger.highlight(f"Added {edge_count} edges")
+        self.save(G)
+        return G
 
-        return G, places_df
-
-    def prepare_pytorch_geometric_data(self, G, places_df):
+    def prepare_pytorch_geometric_data(self, G):
         """Convert NetworkX graph to PyTorch Geometric format"""
         edge_index = []
         edge_attr = []
@@ -259,13 +247,8 @@ class GraphDataProcessor:
         edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
         edge_attr = torch.tensor(edge_attr, dtype=torch.float).view(-1, 1)
 
-        # Get node features
         x = torch.tensor([G.nodes[node]["features"] for node in G.nodes()], dtype=torch.float)
-
-        # Prepare node labels
         y = torch.tensor([G.nodes[node]["label"] for node in G.nodes()], dtype=torch.long)
-
-        # Create PyTorch Geometric Data object
         data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
 
         return data

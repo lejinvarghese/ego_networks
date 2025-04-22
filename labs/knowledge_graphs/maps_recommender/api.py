@@ -42,4 +42,4 @@ class GooglePlacesAPI:
         place_id = self.find_place(location)
         if place_id:
             details = self.get_place_details(place_id)
-            logger.info(f"Place details: {json.dumps(details, indent=4)}")
+            logger.highlight(f"Place details: {json.dumps(details, indent=4)}")
