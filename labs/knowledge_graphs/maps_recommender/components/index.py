@@ -1,34 +1,37 @@
 import faiss
 import numpy as np
-from geopy.distance import geodesic
-
-
-def geo_filter(
-    anchor_coords: tuple[float, float],
-    candidates: list[dict[str, float]],
-    max_distance_km: float = 1,
-) -> list[dict[str, float]]:
-    return [
-        p
-        for p in candidates
-        if geodesic(anchor_coords, (p["lat"], p["lon"])).km <= max_distance_km
-    ]
 
 
 class Retriever:
-    def __init__(self, place_vectors: list[np.ndarray], place_ids: list[str]):
-        self.index = faiss.IndexFlatIP(len(place_vectors[0]))
-        self.index.add(np.array(place_vectors).astype("float32"))
-        self.id_map = {i: pid for i, pid in enumerate(place_ids)}
+    def __init__(self, embeddings: list[np.ndarray], places: list[dict]):
+        self.embeddings = embeddings
+        self.metadata = {i: place for i, place in enumerate(places)}
+        # Use Inner Product index for cosine similarity with pre-normalized vectors
+        self.index = faiss.IndexFlatIP(embeddings[0].shape[0])
+        self.index.add(np.array(embeddings))
 
-    def retrieve(self, query_vector: np.ndarray, top_k: int = 20) -> list[tuple[str, float]]:
-        """Retrieve similar items and their scores."""
-        D, I = self.index.search(
-            np.array([query_vector]).astype("float32"), top_k
+    def retrieve(
+        self, query_embedding: np.ndarray, k: int = 5, threshold: float = 0.3
+    ) -> list[dict]:
+        similarities, indices = self.index.search(
+            query_embedding.reshape(1, -1), k
         )
-        valid_results = [
-            (self.id_map[idx], round(float(score), 2))
-            for idx, score in zip(I[0], D[0])
-            if idx != -1
-        ]
-        return sorted(valid_results, key=lambda x: x[1], reverse=True)
+        results = []
+        rank = 1
+        for similarity, idx in zip(similarities[0], indices[0]):
+            if idx == -1:
+                continue
+            place = self.metadata[idx]
+            if similarity > threshold:
+                results.append(
+                    {
+                        "rank": rank,
+                        "name": place["name"],
+                        "similarity": round(float(similarity), 4),
+                        "lat": place["lat"],
+                        "lon": place["lon"],
+                        "id": place["id"],
+                    }
+                )
+                rank += 1
+        return results
