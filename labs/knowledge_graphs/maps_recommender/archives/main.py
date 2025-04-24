@@ -1,19 +1,16 @@
-import os
 import click
-from dotenv import load_dotenv
-import requests
-import json
-import pandas as pd
-from tqdm import tqdm
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-
 from api import GooglePlacesAPI
-from dataloader import GraphDataLoader, PlacesDataLoader
+from archives.graph import GraphGenerator
+from archives.trainer import GNNTrainer
+from dataloader import PlacesDataLoader
+from dotenv import load_dotenv
 from gnn import GNNModel
-from trainer import GNNTrainer
+from tqdm import tqdm
+
 from utils import logger
 
 load_dotenv()
@@ -24,15 +21,17 @@ tqdm.pandas()
 @click.option(
     "--distance",
     type=float,
-    default=1,
+    default=2,
     help="Distance threshold in km for graph edges",
 )
-@click.option("--hidden", type=int, default=256, help="Hidden channels for GNN")
-@click.option("--epochs", type=int, default=100, help="Number of training epochs")
-@click.option("--patience", type=int, default=40, help="Patience for early stopping")
-@click.option("--batch_size", type=int, default=128, help="Batch size for training")
+@click.option("--hidden", type=int, default=64, help="Hidden channels for GNN")
+@click.option("--epochs", type=int, default=20, help="Number of training epochs")
+@click.option("--patience", type=int, default=5, help="Patience for early stopping")
+@click.option("--batch_size", type=int, default=16, help="Batch size for training")
 @click.option("--checkpoint_dir", type=str, default="data/checkpoints", help="Directory to save model checkpoints")
 def main(distance, hidden, epochs, patience, batch_size, checkpoint_dir):
+    gp = GooglePlacesAPI()
+    gp.ping()
     pdl = PlacesDataLoader()
     datasets = pdl.load()
 
@@ -41,7 +40,7 @@ def main(distance, hidden, epochs, patience, batch_size, checkpoint_dir):
 
     # Prepare graph data
     logger.info("Preparing graph data")
-    graph_preparator = GraphDataLoader(distance_threshold_km=distance)
+    graph_preparator = GraphGenerator(distance_threshold_km=distance)
 
     # Get favorite places
     favorite_places = set(datasets["favorite_places"]["place_id"])
@@ -59,14 +58,14 @@ def main(distance, hidden, epochs, patience, batch_size, checkpoint_dir):
 
     # Initialize model
     model = GNNModel(num_features=data.num_features, hidden_channels=hidden, num_classes=2)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=5e-4)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
     # Calculate class weights for imbalanced data
     labels = data.y.numpy()
     num_positive = np.sum(labels == 1)
     num_negative = np.sum(labels == 0)
     logger.highlight(f"Positive: {num_positive}, Negative: {num_negative}")
-    pos_weight = num_negative / num_positive
+    pos_weight = torch.tensor(num_negative / num_positive).sqrt()  # Square root to soften the weight
     class_weights = torch.tensor([1.0, pos_weight], dtype=torch.float)
 
     # Use weighted CrossEntropyLoss

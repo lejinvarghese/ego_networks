@@ -1,10 +1,11 @@
-import os
-import requests
 import json
+import os
 from urllib.parse import quote_plus
-from utils import logger
 
+import requests
 from dotenv import load_dotenv
+
+from utils import logger
 
 load_dotenv()
 

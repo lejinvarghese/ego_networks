@@ -1,12 +1,15 @@
+import os
+from datetime import datetime
+
+import numpy as np
 import torch
 import torch.nn.functional as F
-import pandas as pd
 from sklearn.metrics import classification_report, roc_auc_score
-import click
-import numpy as np
 from tqdm import tqdm
+
 from utils import logger
-import os
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 class GNNTrainer:
@@ -30,9 +33,11 @@ class GNNTrainer:
             optimizer,
             mode="max",  # We want to maximize validation accuracy
             factor=0.5,  # Multiply LR by this factor on plateau
-            patience=3,  # Number of epochs to wait before reducing LR
+            patience=5,  # Number of epochs to wait before reducing LR
             verbose=True,
             min_lr=1e-8,  # Don't reduce LR below this value
+            threshold=1e-4,  # Minimum change to qualify as an improvement
+            threshold_mode="abs",  # Use absolute change in validation accuracy
         )
 
     def _get_batches(self, mask):
@@ -94,14 +99,9 @@ class GNNTrainer:
             "scheduler_state_dict": self.scheduler.state_dict(),
             "val_acc": val_acc,
         }
-        checkpoint_path = os.path.join(self.checkpoint_dir, f"model_val_acc_{val_acc:.4f}.pt")
+        checkpoint_path = os.path.join(self.checkpoint_dir, f"model_checkpoint_{timestamp}.pt")
         torch.save(checkpoint, checkpoint_path)
-        logger.success(f"Saved checkpoint to {checkpoint_path}")
-
-        # # Remove old checkpoints, keep only the best
-        # for f in os.listdir(self.checkpoint_dir):
-        #     if f.endswith('.pt') and f != os.path.basename(checkpoint_path):
-        #         os.remove(os.path.join(self.checkpoint_dir, f))
+        logger.success(f"Saved checkpoint to {checkpoint_path} (val_acc: {val_acc:.4f})")
 
     def load_checkpoint(self, checkpoint_path=None):
         """Load model checkpoint"""
@@ -144,7 +144,14 @@ class GNNTrainer:
             current_lr = self.optimizer.param_groups[0]["lr"]
 
             # Update progress bar
-            pbar.set_postfix({"loss": f"{loss:.4f}", "train_acc": f"{train_acc:.4f}", "val_acc": f"{val_acc:.4f}", "lr": f"{current_lr:.2e}"})
+            pbar.set_postfix(
+                {
+                    "loss": f"{loss:.4f}",
+                    "train_acc": f"{train_acc:.4f}",
+                    "val_acc": f"{val_acc:.4f}",
+                    "lr": f"{current_lr:.2e}",
+                }
+            )
 
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
@@ -228,9 +235,17 @@ class GNNTrainer:
     def show_top_predictions(self, results_df, top_k=20, verbose=True):
         """Show top places predicted as favorites"""
         cols = ["title", "favorite_probability", "is_favorite"]
-        top_predicted = results_df[results_df["predicted_favorite"] == 1].sort_values("favorite_probability", ascending=False).head(top_k)
+        top_predicted = (
+            results_df[results_df["predicted_favorite"] == 1]
+            .sort_values("favorite_probability", ascending=False)
+            .head(top_k)
+        )
 
-        top_new_items = results_df[(results_df["predicted_favorite"] == 1) & (results_df["is_favorite"] == 0)].sort_values("favorite_probability", ascending=False).head(top_k)
+        top_new_items = (
+            results_df[(results_df["predicted_favorite"] == 1) & (results_df["is_favorite"] == 0)]
+            .sort_values("favorite_probability", ascending=False)
+            .head(top_k)
+        )
 
         if verbose:
             logger.highlight(f"\nTop {top_k} places predicted as favorites:")

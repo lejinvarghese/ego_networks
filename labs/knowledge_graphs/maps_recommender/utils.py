@@ -1,5 +1,6 @@
-from rich import print
 from datetime import datetime
+
+from rich import print
 
 
 class Logger:
