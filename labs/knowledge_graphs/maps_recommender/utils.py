@@ -27,7 +27,11 @@ class Logger:
 
         def color_method(message: str):
             r, g, b = rgb
-            color_name = next(name for name, value in self.color_palette.items() if value == rgb)
+            color_name = next(
+                name
+                for name, value in self.color_palette.items()
+                if value == rgb
+            )
             timestamp = f"{self._get_timestamp()}"
             if color_name == "error":
                 print(f"{timestamp} [rgb({r},{g},{b}) bold]{message}[/]")

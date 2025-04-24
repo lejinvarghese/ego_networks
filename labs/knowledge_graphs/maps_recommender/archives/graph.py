@@ -15,14 +15,18 @@ from utils import logger
 class GraphGenerator:
     def __init__(self, distance_threshold_km: int = 2):
         self.distance_threshold_km = distance_threshold_km
-        self.text_encoder = SentenceTransformer("Alibaba-NLP/gte-modernbert-base")
+        self.text_encoder = SentenceTransformer(
+            "Alibaba-NLP/gte-modernbert-base"
+        )
         self.file_path = self._get_path()
 
     def _get_path(self):
         """Get the path for the saved graph file"""
         data_dir = "data/processed"
         os.makedirs(data_dir, exist_ok=True)
-        return os.path.join(data_dir, f"graph_threshold_{self.distance_threshold_km}.pkl")
+        return os.path.join(
+            data_dir, f"graph_threshold_{self.distance_threshold_km}.pkl"
+        )
 
     def save(self, G):
         """Save the graph and places DataFrame to disk"""
@@ -46,7 +50,10 @@ class GraphGenerator:
         dlat = lat2 - lat1
         dlon = lon2 - lon1
 
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        )
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         distance = R * c
 
@@ -66,25 +73,39 @@ class GraphGenerator:
 
         # Convert labels to lowercase for case-insensitive comparison
         labels_lower = {str(l).lower() for l in labels}
-        nodes["is_favorite"] = nodes["place_id"].str.lower().isin(labels_lower).astype(int)
+        nodes["is_favorite"] = (
+            nodes["place_id"].str.lower().isin(labels_lower).astype(int)
+        )
 
-        logger.highlight(f"Nodes with is_favorite=1: {nodes['is_favorite'].sum()}")
-        logger.highlight(f"Unique place_ids in nodes: {nodes['place_id'].nunique()}")
-        logger.highlight(f"Nodes with missing lat/lon: {nodes[pd.isna(nodes['lat']) | pd.isna(nodes['lon'])].shape[0]}")
+        logger.highlight(
+            f"Nodes with is_favorite=1: {nodes['is_favorite'].sum()}"
+        )
+        logger.highlight(
+            f"Unique place_ids in nodes: {nodes['place_id'].nunique()}"
+        )
+        logger.highlight(
+            f"Nodes with missing lat/lon: {nodes[pd.isna(nodes['lat']) | pd.isna(nodes['lon'])].shape[0]}"
+        )
 
         text_descriptions = [row.document for _, row in nodes.iterrows()]
-        text_embeddings = self.text_encoder.encode(text_descriptions, show_progress_bar=True)
+        text_embeddings = self.text_encoder.encode(
+            text_descriptions, show_progress_bar=True
+        )
         logger.highlight(f"Generated embeddings count: {len(text_embeddings)}")
 
         G = nx.Graph()
-        for idx, (row, embedding) in enumerate(zip(nodes.iterrows(), text_embeddings)):
+        for idx, (row, embedding) in enumerate(
+            zip(nodes.iterrows(), text_embeddings)
+        ):
             _, row = row
             node_features = np.concatenate([embedding])
             G.add_node(idx, features=node_features)
             G.nodes[idx]["label"] = row.is_favorite
 
         logger.highlight(f"Graph nodes count: {G.number_of_nodes()}")
-        logger.highlight(f"Graph nodes with label=1: {sum(1 for _, d in G.nodes(data=True) if d['label'] == 1)}")
+        logger.highlight(
+            f"Graph nodes with label=1: {sum(1 for _, d in G.nodes(data=True) if d['label'] == 1)}"
+        )
 
         edge_count = 0
         skipped_edges = 0
@@ -128,13 +149,19 @@ class GraphGenerator:
         edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
         edge_attr = torch.tensor(edge_attr, dtype=torch.float).view(-1, 1)
 
-        x = torch.tensor([G.nodes[node]["features"] for node in G.nodes()], dtype=torch.float)
-        y = torch.tensor([G.nodes[node]["label"] for node in G.nodes()], dtype=torch.long)
+        x = torch.tensor(
+            [G.nodes[node]["features"] for node in G.nodes()], dtype=torch.float
+        )
+        y = torch.tensor(
+            [G.nodes[node]["label"] for node in G.nodes()], dtype=torch.long
+        )
         data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
 
         return data
 
-    def create_train_val_test_masks(self, data, train_ratio=0.7, val_ratio=0.15):
+    def create_train_val_test_masks(
+        self, data, train_ratio=0.7, val_ratio=0.15
+    ):
         """Create masks for training, validation, and test sets with balanced class distribution"""
         num_nodes = data.num_nodes
         labels = data.y.numpy()
@@ -155,11 +182,15 @@ class GraphGenerator:
 
         # Create splits for each class
         train_indices_0 = class_0_indices[:train_size_0]
-        val_indices_0 = class_0_indices[train_size_0 : train_size_0 + val_size_0]
+        val_indices_0 = class_0_indices[
+            train_size_0 : train_size_0 + val_size_0
+        ]
         test_indices_0 = class_0_indices[train_size_0 + val_size_0 :]
 
         train_indices_1 = class_1_indices[:train_size_1]
-        val_indices_1 = class_1_indices[train_size_1 : train_size_1 + val_size_1]
+        val_indices_1 = class_1_indices[
+            train_size_1 : train_size_1 + val_size_1
+        ]
         test_indices_1 = class_1_indices[train_size_1 + val_size_1 :]
 
         # Combine indices

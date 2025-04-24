@@ -15,13 +15,26 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 class GNNTrainer:
     """Trainer for GNN models"""
 
-    def __init__(self, model, data, optimizer, criterion, device=None, batch_size=32, checkpoint_dir="checkpoints"):
+    def __init__(
+        self,
+        model,
+        data,
+        optimizer,
+        criterion,
+        device=None,
+        batch_size=32,
+        checkpoint_dir="checkpoints",
+    ):
         self.model = model
         self.data = data
         self.optimizer = optimizer
         self.criterion = criterion
         self.batch_size = batch_size
-        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = (
+            device
+            if device is not None
+            else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        )
         self.checkpoint_dir = checkpoint_dir
         os.makedirs(checkpoint_dir, exist_ok=True)
 
@@ -68,7 +81,9 @@ class GNNTrainer:
             self.optimizer.zero_grad()
 
             # Forward pass
-            out = self.model(self.data.x, self.data.edge_index, self.data.edge_attr)
+            out = self.model(
+                self.data.x, self.data.edge_index, self.data.edge_attr
+            )
             batch_out = out[batch_idx]
             batch_labels = self.data.y[batch_idx]
 
@@ -99,19 +114,27 @@ class GNNTrainer:
             "scheduler_state_dict": self.scheduler.state_dict(),
             "val_acc": val_acc,
         }
-        checkpoint_path = os.path.join(self.checkpoint_dir, f"model_checkpoint_{timestamp}.pt")
+        checkpoint_path = os.path.join(
+            self.checkpoint_dir, f"model_checkpoint_{timestamp}.pt"
+        )
         torch.save(checkpoint, checkpoint_path)
-        logger.success(f"Saved checkpoint to {checkpoint_path} (val_acc: {val_acc:.4f})")
+        logger.success(
+            f"Saved checkpoint to {checkpoint_path} (val_acc: {val_acc:.4f})"
+        )
 
     def load_checkpoint(self, checkpoint_path=None):
         """Load model checkpoint"""
         if checkpoint_path is None:
             # Find the best checkpoint
-            checkpoints = [f for f in os.listdir(self.checkpoint_dir) if f.endswith(".pt")]
+            checkpoints = [
+                f for f in os.listdir(self.checkpoint_dir) if f.endswith(".pt")
+            ]
             if not checkpoints:
                 logger.warning("No checkpoints found")
                 return None
-            checkpoint_path = os.path.join(self.checkpoint_dir, sorted(checkpoints)[-1])
+            checkpoint_path = os.path.join(
+                self.checkpoint_dir, sorted(checkpoints)[-1]
+            )
 
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path, map_location=self.device)
@@ -159,7 +182,10 @@ class GNNTrainer:
                 # Save checkpoint
                 self.save_checkpoint(val_acc, epoch)
                 # Save best model weights
-                best_model_state = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
+                best_model_state = {
+                    k: v.cpu().clone()
+                    for k, v in self.model.state_dict().items()
+                }
             else:
                 patience_counter += 1
 
@@ -170,7 +196,9 @@ class GNNTrainer:
 
             if current_lr <= self.scheduler.min_lrs[0]:
                 if verbose:
-                    logger.warning(f"Stopping - Learning rate {current_lr:.2e} below minimum")
+                    logger.warning(
+                        f"Stopping - Learning rate {current_lr:.2e} below minimum"
+                    )
                 break
 
         # Restore best model weights
@@ -221,7 +249,9 @@ class GNNTrainer:
             logger.success(f"Max probability: {y_prob.max():.3f}")
 
         return {
-            "classification_report": classification_report(y_true, y_pred, output_dict=True),
+            "classification_report": classification_report(
+                y_true, y_pred, output_dict=True
+            ),
             "roc_auc": roc_auc_score(y_true, y_prob),
             "prob_stats": {
                 "mean": y_prob.mean(),
@@ -242,7 +272,10 @@ class GNNTrainer:
         )
 
         top_new_items = (
-            results_df[(results_df["predicted_favorite"] == 1) & (results_df["is_favorite"] == 0)]
+            results_df[
+                (results_df["predicted_favorite"] == 1)
+                & (results_df["is_favorite"] == 0)
+            ]
             .sort_values("favorite_probability", ascending=False)
             .head(top_k)
         )
@@ -250,7 +283,9 @@ class GNNTrainer:
         if verbose:
             logger.highlight(f"\nTop {top_k} places predicted as favorites:")
             logger.info(top_predicted[cols].to_string(index=False))
-            logger.highlight(f"\nTop {top_k} places predicted as new favorites:")
+            logger.highlight(
+                f"\nTop {top_k} places predicted as new favorites:"
+            )
             logger.success(top_new_items[cols].to_string(index=False))
 
         return top_predicted
